@@ -1,12 +1,140 @@
 <!doctype html>
-<html lang="en">
+
+<html class="light" lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>glowskin-frontend</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#fbf9f8" />
+    <meta name="description" content="GlowSkin - Tu ritual de bienestar comienza aquí. Productos premium de skincare, cuidado corporal, aromas y más." />
+    <title>GlowSkin | Tu Ritual de Bienestar</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            screens: {
+              xs: "375px",
+              sm: "640px",
+              md: "768px",
+              lg: "1024px",
+              xl: "1280px",
+              "2xl": "1536px",
+            },
+            colors: {
+              "surface-container-lowest": "#ffffff",
+              "secondary-fixed": "#f5ddd7",
+              "on-secondary-fixed-variant": "#53433f",
+              "surface-container": "#f0eded",
+              "on-surface": "#1b1c1c",
+              "on-background": "#1b1c1c",
+              "on-primary-fixed": "#2e1506",
+              "surface-variant": "#e4e2e1",
+              "outline": "#82746d",
+              "surface-bright": "#fbf9f8",
+              "surface-container-high": "#eae8e7",
+              "on-tertiary-container": "#474949",
+              "on-secondary": "#ffffff",
+              "on-tertiary-fixed": "#1a1c1c",
+              "error-container": "#ffdad6",
+              "surface-container-low": "#f6f3f2",
+              "on-error": "#ffffff",
+              "inverse-surface": "#303030",
+              "surface": "#fbf9f8",
+              "on-secondary-container": "#705f5a",
+              "on-primary-fixed-variant": "#603f2d",
+              "primary": "#7a5642",
+              "error": "#ba1a1a",
+              "primary-fixed": "#ffdbca",
+              "tertiary-fixed": "#e2e2e2",
+              "tertiary-container": "#b7b8b8",
+              "primary-fixed-dim": "#ecbda4",
+              "on-tertiary": "#ffffff",
+              "surface-dim": "#dcd9d9",
+              "secondary-container": "#f2dbd5",
+              "on-surface-variant": "#50443e",
+              "tertiary-fixed-dim": "#c6c6c7",
+              "tertiary": "#5d5f5f",
+              "on-primary-container": "#62412e",
+              "on-primary": "#ffffff",
+              "secondary-fixed-dim": "#d8c2bc",
+              "surface-container-highest": "#e4e2e1",
+              "inverse-on-surface": "#f3f0f0",
+              "surface-tint": "#7a5642",
+              "secondary": "#6c5a56",
+              "on-error-container": "#93000a",
+              "primary-container": "#dcae96",
+              "outline-variant": "#d4c3bb",
+              "on-tertiary-fixed-variant": "#454747",
+              "background": "#fbf9f8",
+              "inverse-primary": "#ecbda4",
+              "on-secondary-fixed": "#251915"
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px"
+            },
+            spacing: {
+              "stack-xs": "8px",
+              "stack-sm": "12px",
+              "stack-md": "24px",
+              "stack-lg": "48px",
+              "margin-mobile": "20px",
+              "margin-tablet": "32px",
+              "margin-desktop": "64px",
+              "container-max": "1280px",
+              unit: "8px",
+              gutter: "24px",
+            },
+            fontFamily: {
+              "body-lg": ["Plus Jakarta Sans"],
+              "label-sm": ["Plus Jakarta Sans"],
+              "headline-sm": ["Libre Caslon Text"],
+              "label-md": ["Plus Jakarta Sans"],
+              "headline-md": ["Libre Caslon Text"],
+              "display-lg-mobile": ["Libre Caslon Text"],
+              "display-lg": ["Libre Caslon Text"],
+              "body-md": ["Plus Jakarta Sans"]
+            },
+            fontSize: {
+              "body-lg": ["18px", { lineHeight: "1.6", fontWeight: "400" }],
+              "label-sm": ["12px", { lineHeight: "1.2", fontWeight: "500" }],
+              "headline-sm": ["24px", { lineHeight: "1.4", fontWeight: "400" }],
+              "label-md": ["14px", { lineHeight: "1.2", letterSpacing: "0.05em", fontWeight: "600" }],
+              "headline-md": ["32px", { lineHeight: "1.3", fontWeight: "400" }],
+              "display-lg-mobile": ["36px", { lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "400" }],
+              "display-lg": ["48px", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "400" }],
+              "body-md": ["16px", { lineHeight: "1.6", fontWeight: "400" }]
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        background-color: #fbf9f8;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .ambient-glow {
+        box-shadow: 0px 10px 30px rgba(220, 174, 150, 0.15);
+      }
+    </style>
   </head>
-  <body>
+  <body class="font-body-md text-on-surface antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

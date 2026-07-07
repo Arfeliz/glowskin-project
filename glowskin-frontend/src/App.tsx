@@ -1,122 +1,490 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from "react";
+import { CartProvider, useCart } from "./context/CartContext";
+import HeroBanner from "./components/HeroBanner";
+import Filters from "./components/Filters";
+import ProductCard from "./components/ProductCard";
+import BottomNav from "./components/BottomNav";
+import WhatsAppButton from "./components/WhatsAppButton";
+import CategoriesPage from "./components/CategoriesPage";
+import WishlistPage from "./components/WishlistPage";
+import ProductDetailPage from "./components/ProductDetailPage";
+import type { Product } from "./services/products";
 
-function App() {
-  const [count, setCount] = useState(0)
+type Page = "home" | "categories" | "wishlist" | "product";
+
+const MOCK_PRODUCTS: Product[] = [
+  {
+    id: 1,
+    name: "Serum Iluminador",
+    price: 42.0,
+    category: "Skincare",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuB64h8uYsvpRJxvxj84lP0gY15xXANP9yOVR0AfJMeTUi_5Uge73fDjtSEq84K1WVjvlVuSFIa4A7mD10W0NhurrmyeXS_gbMLuMR0YjAIu8P7eI1IDMH4DVGdxblh2kK6HoTa1Cp_9PHHN4GE3U_0v3RxG7xsA04iTn-HTM8IwbINHF6EInde4mrB-k8xnA7bIlO9r5mPVVeXXoeuEz1glw1x3Ahli0kG9fHc8BBIEvwlp8btb2LyMkg",
+    alt: "Close-up of a premium minimalist glass bottle with a white dropper",
+  },
+  {
+    id: 2,
+    name: "Bálsamo para Barba",
+    price: 28.0,
+    category: "Cuidado Masculino",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBE2KhpEWcTeZKfJQdZCQdYMnyfQvmp058rYTzPPEUR4du4ImbC5xJnuwZ0bmSyX6Rhpp6USU8d6wRCRgvCz63ntG0uMmi7senQ0vrZ07j1tK-tBqR1JAbfyuqJ3jbCj4kvVupA7IgC-z3QOgm7XAY3JNB-o4xCRWWzSoQJs283aesGTQ_ECV6ZH9jVnEtRMLcGjv8fLgGirV_8QZpw4SYvkkCyLs6-Y6UIW_j0JU3itGdyZ0qduINcrg",
+    alt: "Matte black tin of beard balm",
+  },
+  {
+    id: 3,
+    name: "Vela Calma Profunda",
+    price: 35.0,
+    category: "Aromas y Velas",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCvHMNebinBQ5Cz4bhbuizmSDe_mPK668h7wkD6y2eNaWfg_Ht_rhA6ChLMsT1hIEI5b16Z0XZMRlK1NSUNgPA_pXJeyj_akebcSJNF84lsKx0hKsL0ZIdCOYAvdzeZBUqTrxgRG5UTpaCJ2Ayi9a1O4BZEsLvtyPkipSvGhxlewGwJbhnKlYDo_2Mp89TiEfvv1s2uFZFYjcfRzoFckCJdmpnMZwKI2Zf_gMXXrHDB17yRUSvhYTtRIw",
+    alt: "Minimalist scented candle in amber glass jar",
+  },
+  {
+    id: 4,
+    name: "Hidratante Facial Hombre",
+    price: 32.0,
+    category: "Cuidado Masculino",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuDtIfJmK0ZfURZsaCegYw_ijfx_oOR9toMYSgvG74Kmja5a8Pfee-IKZhfski2B22GeWqF1Pp-e_StLTqj8GpqcYBtkp4yTEc89-nQBgyha2UUl1_DCoSAsFI3AB74S02TFwdkOO3P3HEd_qJppBZmfYDtx5S8owaZrdN1TB5_8X0KJ3DWpsEZD8LN1VuBNfJ27KFdeT8cFYmtVr7xoB9SH_5tBumLtvuFiz_wgu6wumNjVXrOZrgqKjA",
+    alt: "Minimalist dark blue tube of hydrating facial cream",
+  },
+  {
+    id: 5,
+    name: "Crema Corporal Nutritiva",
+    price: 38.0,
+    category: "Cuidado Corporal",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCbxRbdQiW3RNA3i4WAH6leHH7gt5HqFjF8x2wpOIZtBapQbsEzTiUcr1Zkuw0o2iPIybWZQoMz2FyC9fpqPAxclEh_VGbZvHlk6lKnMPqg82oVzlMdEtgu37IXcSPkHJugEGVaC3GPOOn7cZbKmnPp93DBIK0sRSKuUANHWgXzIZSGmtm6iMtwMUEEYG99abkAWxP3XD61aYbRUsMxfj8W9SIpIjU3ZV61zQJw8w5kbCpRYqrM8j73kw",
+    alt: "Crema corporal en tarro de vidrio",
+  },
+  {
+    id: 6,
+    name: "Aceite Esencial Lavanda",
+    price: 22.0,
+    category: "Aromas y Velas",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCvHMNebinBQ5Cz4bhbuizmSDe_mPK668h7wkD6y2eNaWfg_Ht_rhA6ChLMsT1hIEI5b16Z0XZMRlK1NSUNgPA_pXJeyj_akebcSJNF84lsKx0hKsL0ZIdCOYAvdzeZBUqTrxgRG5UTpaCJ2Ayi9a1O4BZEsLvtyPkipSvGhxlewGwJbhnKlYDo_2Mp89TiEfvv1s2uFZFYjcfRzoFckCJdmpnMZwKI2Zf_gMXXrHDB17yRUSvhYTtRIw",
+    alt: "Botella de aceite esencial",
+  },
+  {
+    id: 7,
+    name: "Exfoliante Facial Suave",
+    price: 26.0,
+    category: "Skincare",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuB64h8uYsvpRJxvxj84lP0gY15xXANP9yOVR0AfJMeTUi_5Uge73fDjtSEq84K1WVjvlVuSFIa4A7mD10W0NhurrmyeXS_gbMLuMR0YjAIu8P7eI1IDMH4DVGdxblh2kK6HoTa1Cp_9PHHN4GE3U_0v3RxG7xsA04iTn-HTM8IwbINHF6EInde4mrB-k8xnA7bIlO9r5mPVVeXXoeuEz1glw1x3Ahli0kG9fHc8BBIEvwlp8btb2LyMkg",
+    alt: "Tubo de exfoliante facial",
+  },
+  {
+    id: 8,
+    name: "Vitamina C + Zinc",
+    price: 18.0,
+    category: "Suplementos",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuDtIfJmK0ZfURZsaCegYw_ijfx_oOR9toMYSgvG74Kmja5a8Pfee-IKZhfski2B22GeWqF1Pp-e_StLTqj8GpqcYBtkp4yTEc89-nQBgyha2UUl1_DCoSAsFI3AB74S02TFwdkOO3P3HEd_qJppBZmfYDtx5S8owaZrdN1TB5_8X0KJ3DWpsEZD8LN1VuBNfJ27KFdeT8cFYmtVr7xoB9SH_5tBumLtvuFiz_wgu6wumNjVXrOZrgqKjA",
+    alt: "Frasco de suplementos",
+  },
+];
+
+function AppContent() {
+  const { items } = useCart();
+  const [activePage, setActivePage] = useState<Page>("home");
+  const [activeCategory, setActiveCategory] = useState("Todos");
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  const cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
+
+  const handleSelectProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setActivePage("product");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCategorySelect = (category: string) => {
+    setActiveCategory(category);
+    setSearchQuery("");
+    setActivePage("home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      setActiveCategory("Todos");
+      setActivePage("home");
+    }
+  };
+
+  // Search takes priority over category filter
+  const filtered = (() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      return MOCK_PRODUCTS.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          String(p.id).includes(q)
+      );
+    }
+    return activeCategory === "Todos"
+      ? MOCK_PRODUCTS
+      : MOCK_PRODUCTS.filter((p) => p.category === activeCategory);
+  })();
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
+      {/* ========== TOP APP BAR — hidden on product detail (has its own back button) ========== */}
+      {activePage !== "product" && (
+      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-tablet lg:px-margin-desktop h-14 sm:h-16 bg-surface/95 backdrop-blur-md border-b border-outline-variant/30">
         <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          className="md:hidden material-symbols-outlined text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform text-[24px] sm:text-[28px]"
+          aria-label="Menú"
         >
-          Count is {count}
+          menu
         </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+        <h1 className="font-headline-md text-headline-sm sm:text-headline-md text-primary tracking-tight select-none">
+          {activePage === "categories" ? "CATEGORÍAS" : activePage === "wishlist" ? "MI LISTA" : "GLOWSKIN"}
+        </h1>
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Nav links — solo desktop. El bolso ya cubre "Mi Lista" con badge */}
+          <nav className="hidden md:flex items-center gap-6 mr-4">
+            {(["home", "categories"] as Page[]).map((page) => {
+              const labels: Record<string, string> = { home: "Inicio", categories: "Categorías" };
+              return (
+                <button
+                  key={page}
+                  onClick={() => setActivePage(page)}
+                  className={`font-label-md text-label-md transition-colors pb-0.5 ${
+                    activePage === page
+                      ? "text-primary border-b-2 border-primary"
+                      : "text-on-surface-variant hover:text-primary border-b-2 border-transparent"
+                  }`}
+                >
+                  {labels[page]}
+                </button>
+              );
+            })}
+          </nav>
+          {/* Buscar */}
+          <button
+            onClick={() => setIsSearchOpen((o) => !o)}
+            className={`active:scale-90 transition-all ${
+              isSearchOpen ? "text-primary" : "text-on-surface-variant hover:text-primary"
+            }`}
+            aria-label="Buscar"
+          >
+            <span
+              className="material-symbols-outlined text-[24px] sm:text-[26px]"
+              style={isSearchOpen ? { fontVariationSettings: "'FILL' 1" } : undefined}
+            >search</span>
+          </button>
+          {/* Bolso — única entrada a Mi Lista en desktop, con badge de cantidad */}
+          <button
+            onClick={() => setActivePage("wishlist")}
+            className="relative text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform"
+            aria-label="Mi Lista"
+          >
+            <span className="material-symbols-outlined text-[24px] sm:text-[28px]"
+              style={activePage === "wishlist" ? { fontVariationSettings: "'FILL' 1" } : undefined}
+            >shopping_bag</span>
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-primary text-on-primary text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
+                {cartCount > 9 ? "9+" : cartCount}
+              </span>
+            )}
+          </button>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      </header>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      {/* ========== SEARCH OVERLAY ========== */}
+      {isSearchOpen && activePage !== "product" && (
+        <>
+          {/* Backdrop — click fuera para cerrar */}
+          <div
+            className="fixed inset-0 z-30"
+            onClick={() => setIsSearchOpen(false)}
+          />
+          {/* Barra de búsqueda */}
+          <div
+            className="fixed top-14 sm:top-16 left-0 w-full z-40 bg-surface/98 backdrop-blur-md border-b border-outline-variant/30 px-margin-mobile py-3 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="max-w-container-max mx-auto flex items-center gap-3">
+              <span className="material-symbols-outlined text-primary text-[20px] flex-shrink-0">search</span>
+              <input
+                autoFocus
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Buscar por nombre de producto..."
+                className="flex-1 bg-transparent font-body-md text-sm text-on-surface placeholder:text-on-surface-variant/50 outline-none min-w-0"
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setIsSearchOpen(false);
+                  if (e.key === "Enter") setIsSearchOpen(false);
+                }}
+              />
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="text-on-surface-variant hover:text-error active:scale-90 transition-all flex-shrink-0"
+                  aria-label="Limpiar"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsSearchOpen(false)}
+                  className="text-on-surface-variant hover:text-on-surface active:scale-90 transition-all flex-shrink-0"
+                  aria-label="Cerrar búsqueda"
+                >
+                  <span className="material-symbols-outlined text-[18px]">keyboard_return</span>
+                </button>
+              )}
+            </div>
+            {searchQuery.trim() && (
+              <p className="font-label-sm text-[11px] text-on-surface-variant mt-2 px-7">
+                {filtered.length === 0
+                  ? "Sin resultados para"
+                  : `${filtered.length} resultado${filtered.length !== 1 ? "s" : ""} para`}{" "}
+                <span className="font-semibold text-primary">"{searchQuery}"</span>
+              </p>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ========== MAIN CONTENT ========== */}
+      {activePage === "product" && selectedProduct ? (
+        <ProductDetailPage
+          product={selectedProduct}
+          relatedProducts={MOCK_PRODUCTS.filter((p) => p.id !== selectedProduct.id).slice(0, 5)}
+          onBack={() => setActivePage("home")}
+          onSelectProduct={handleSelectProduct}
+        />
+      ) : activePage === "categories" ? (
+        <CategoriesPage onCategorySelect={handleCategorySelect} />
+      ) : activePage === "wishlist" ? (
+        <WishlistPage />
+      ) : (
+        <main className="pt-14 sm:pt-16 pb-20 md:pb-12">
+          <HeroBanner />
+
+          {/* ── Buscador ── */}
+          <div className="px-margin-mobile md:px-margin-tablet lg:px-margin-desktop max-w-container-max mx-auto pt-4 pb-2">
+            <div className="flex items-center gap-3 bg-surface-container rounded-full px-4 py-3 border border-outline-variant/20 focus-within:border-primary/40 transition-colors">
+              <span className="material-symbols-outlined text-on-surface-variant text-[20px] flex-shrink-0">search</span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Buscar por nombre de producto..."
+                className="flex-1 bg-transparent font-body-md text-sm text-on-surface placeholder:text-on-surface-variant/50 outline-none min-w-0"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => { setSearchQuery(""); }}
+                  className="text-on-surface-variant hover:text-on-surface active:scale-90 transition-all flex-shrink-0"
+                  aria-label="Limpiar búsqueda"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              )}
+            </div>
+            {searchQuery.trim() && (
+              <p className="font-label-sm text-on-surface-variant mt-2 px-1">
+                {filtered.length === 0
+                  ? "Sin resultados para"
+                  : `${filtered.length} resultado${filtered.length !== 1 ? "s" : ""} para`}{" "}
+                <span className="font-semibold text-primary">"{searchQuery}"</span>
+              </p>
+            )}
+          </div>
+
+          {/* Filtros de categoría — se ocultan si hay búsqueda activa */}
+          {!searchQuery.trim() && (
+            <Filters active={activeCategory} onChange={setActiveCategory} />
+          )}
+
+          {/* Product Grid */}
+          <section className="px-margin-mobile md:px-margin-tablet lg:px-margin-desktop max-w-container-max mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-gutter">
+              {filtered.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  {...product}
+                  onSelect={() => handleSelectProduct(product)}
+                />
+              ))}
+            </div>
+
+            {filtered.length === 0 && (
+              <div className="col-span-full text-center py-16">
+                <span className="material-symbols-outlined text-5xl text-outline mb-4">search_off</span>
+                <p className="font-body-md text-on-surface-variant">
+                  {searchQuery.trim()
+                    ? `No hay productos que coincidan con "${searchQuery}"`
+                    : "No hay productos en esta categoría"}
+                </p>
+                {searchQuery.trim() && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="mt-4 font-label-md text-label-md text-primary hover:opacity-80 transition-opacity"
+                  >
+                    Limpiar búsqueda
+                  </button>
+                )}
+              </div>
+            )}
+          </section>
+        </main>
+      )}
+
+      {activePage !== "product" && <WhatsAppButton />}
+      {activePage !== "product" && (
+        <BottomNav activePage={activePage} onNavigate={setActivePage} />
+      )}
+
+      {/* ========== DESKTOP FOOTER ========== */}
+      {activePage !== "product" && (
+        <footer className="hidden md:block bg-surface-container-lowest border-t border-outline-variant/30 pt-12 pb-8 px-margin-desktop">
+          <div className="max-w-container-max mx-auto">
+            {/* Top row */}
+            <div className="grid grid-cols-3 gap-12 mb-10">
+              {/* Brand */}
+              <div>
+                <p className="font-headline-md text-headline-sm text-primary mb-3">GLOWSKIN</p>
+                <p className="font-body-md text-sm text-on-surface-variant leading-relaxed">
+                  Tienda digital de skincare y bienestar. Productos cuidadosamente seleccionados
+                  para tu ritual diario.
+                </p>
+              </div>
+
+              {/* Navegación */}
+              <div>
+                <p className="font-label-md text-label-md uppercase tracking-widest text-on-surface mb-4">Explorar</p>
+                <ul className="space-y-2">
+                  {([["home","Inicio"],["categories","Categorías"],["wishlist","Mi Lista"]] as [Page,string][]).map(([page, label]) => (
+                    <li key={page}>
+                      <button
+                        onClick={() => setActivePage(page)}
+                        className="font-body-md text-sm text-on-surface-variant hover:text-primary transition-colors"
+                      >
+                        {label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Contacto & redes */}
+              <div>
+                <p className="font-label-md text-label-md uppercase tracking-widest text-on-surface mb-4">Contacto</p>
+                <ul className="space-y-3">
+                  {/* WhatsApp */}
+                  <li>
+                    <a
+                      href="https://wa.me/message/P7BWJKUAM2AEP1"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors"
+                    >
+                      <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.185-.573c.948.517 2.011.897 3.146.897 3.181 0 5.767-2.586 5.768-5.766.001-3.18-2.585-5.739-5.768-5.739zm3.377 8.203c-.152.427-.751.776-1.042.825-.264.043-.604.072-1.001-.132-.206-.107-.442-.234-.844-.413-1.72-.765-2.836-2.525-2.922-2.639-.086-.114-.698-.928-.698-1.769s.442-1.253.599-1.424c.158-.171.343-.214.457-.214l.328.009c.102.004.24-.038.376.289.141.339.484 1.18.526 1.265.043.085.072.185.014.3-.058.114-.086.185-.172.285-.086.1-.182.224-.259.3-.086.085-.176.177-.076.35.1.171.442.729.948 1.18.653.581 1.203.762 1.374.847.171.086.271.071.371-.043.1-.114.427-.498.541-.669.114-.171.229-.142.385-.086.158.057 1.001.471 1.173.557.171.086.285.128.328.2.043.072.043.414-.109.84z"/>
+                        <path d="M12.036 3c-4.956 0-8.993 3.963-8.997 8.914-.002 1.812.546 3.535 1.577 4.99l-1.616 5.896 6.037-1.584c1.405.767 3.012 1.171 4.673 1.171h.004c4.954 0 8.993-4.046 8.997-8.997.001-4.952-4.021-8.394-8.675-8.394zm-.005 16.335c-1.61 0-3.187-.433-4.561-1.25l-.327-.194-3.393.89.905-3.303-.214-.341c-.901-1.428-1.378-3.091-1.376-4.8.004-4.536 3.693-8.225 8.232-8.225 4.54 0 8.228 3.69 8.232 8.228.004 4.538-3.692 8.645-8.232 8.645z"/>
+                      </svg>
+                      <span>WhatsApp</span>
+                    </a>
+                  </li>
+                  {/* Instagram */}
+                  <li>
+                    <a
+                      href="https://www.instagram.com/gloowskin1/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors"
+                    >
+                      <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                      </svg>
+                      <span>@gloowskin1</span>
+                    </a>
+                  </li>
+                  {/* TikTok */}
+                  <li>
+                    <a
+                      href="https://www.tiktok.com/@gloowskin2"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors"
+                    >
+                      <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.27 8.27 0 0 0 4.84 1.55V6.79a4.85 4.85 0 0 1-1.07-.1z"/>
+                      </svg>
+                      <span>@gloowskin2</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Bottom row */}
+            <div className="border-t border-outline-variant/40 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2">
+              <p className="font-body-md text-xs text-on-surface-variant">
+                © 2025 GlowSkin · Tienda digital · Todos los derechos reservados.
+              </p>
+              <div className="flex items-center gap-4">
+                <a
+                  href="https://wa.me/message/P7BWJKUAM2AEP1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container hover:bg-secondary-container text-on-surface-variant hover:text-primary transition-all"
+                  aria-label="WhatsApp"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.185-.573c.948.517 2.011.897 3.146.897 3.181 0 5.767-2.586 5.768-5.766.001-3.18-2.585-5.739-5.768-5.739zm3.377 8.203c-.152.427-.751.776-1.042.825-.264.043-.604.072-1.001-.132-.206-.107-.442-.234-.844-.413-1.72-.765-2.836-2.525-2.922-2.639-.086-.114-.698-.928-.698-1.769s.442-1.253.599-1.424c.158-.171.343-.214.457-.214l.328.009c.102.004.24-.038.376.289.141.339.484 1.18.526 1.265.043.085.072.185.014.3-.058.114-.086.185-.172.285-.086.1-.182.224-.259.3-.086.085-.176.177-.076.35.1.171.442.729.948 1.18.653.581 1.203.762 1.374.847.171.086.271.071.371-.043.1-.114.427-.498.541-.669.114-.171.229-.142.385-.086.158.057 1.001.471 1.173.557.171.086.285.128.328.2.043.072.043.414-.109.84z"/>
+                    <path d="M12.036 3c-4.956 0-8.993 3.963-8.997 8.914-.002 1.812.546 3.535 1.577 4.99l-1.616 5.896 6.037-1.584c1.405.767 3.012 1.171 4.673 1.171h.004c4.954 0 8.993-4.046 8.997-8.997.001-4.952-4.021-8.394-8.675-8.394zm-.005 16.335c-1.61 0-3.187-.433-4.561-1.25l-.327-.194-3.393.89.905-3.303-.214-.341c-.901-1.428-1.378-3.091-1.376-4.8.004-4.536 3.693-8.225 8.232-8.225 4.54 0 8.228 3.69 8.232 8.228.004 4.538-3.692 8.645-8.232 8.645z"/>
+                  </svg>
+                </a>
+                <a
+                  href="https://www.instagram.com/gloowskin1/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container hover:bg-secondary-container text-on-surface-variant hover:text-primary transition-all"
+                  aria-label="Instagram"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                </a>
+                <a
+                  href="https://www.tiktok.com/@gloowskin2"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container hover:bg-secondary-container text-on-surface-variant hover:text-primary transition-all"
+                  aria-label="TikTok"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.27 8.27 0 0 0 4.84 1.55V6.79a4.85 4.85 0 0 1-1.07-.1z"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </footer>
+      )}
     </>
-  )
+  );
 }
 
-export default App
+function App() {
+  return (
+    <CartProvider>
+      <AppContent />
+    </CartProvider>
+  );
+}
+
+export default App;
