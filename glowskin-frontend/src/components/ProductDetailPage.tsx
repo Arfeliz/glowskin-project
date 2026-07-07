@@ -119,29 +119,28 @@ export default function ProductDetailPage({
         <section className="space-y-4 border-t border-outline-variant pt-stack-md">
           <AccordionItem title="Beneficios" defaultOpen>
             <p className="text-on-surface-variant leading-relaxed">
-              Nuestra fórmula magistral penetra profundamente para restaurar el brillo natural de
-              tu piel. Diseñado para combatir la opacidad y las manchas leves, dejando un acabado
-              aterciopelado y radiante desde la primera aplicación.
+              {product.description ??
+                "Nuestra fórmula magistral penetra profundamente para restaurar el brillo natural de tu piel. Diseñado para combatir la opacidad y las manchas leves, dejando un acabado aterciopelado y radiante desde la primera aplicación."}
             </p>
-            <ul className="mt-4 space-y-2">
-              <li className="flex items-center space-x-3">
-                <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
-                <span className="text-body-md">Hidratación profunda 24h</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
-                <span className="text-body-md">Efecto antioxidante potente</span>
-              </li>
-            </ul>
+            {(product.benefitPoints ?? ["Hidratación profunda 24h", "Efecto antioxidante potente"]).length > 0 && (
+              <ul className="mt-4 space-y-2">
+                {(product.benefitPoints ?? ["Hidratación profunda 24h", "Efecto antioxidante potente"]).map((point) => (
+                  <li key={point} className="flex items-center space-x-3">
+                    <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
+                    <span className="text-body-md">{point}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </AccordionItem>
 
           <AccordionItem title="Ingredientes Clave">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-              {[
+              {(product.ingredients ?? [
                 { name: "Vitamina C Estabilizada", desc: "Aclara y unifica el tono de la piel sin irritación." },
                 { name: "Extracto de Rosa Mosqueta", desc: "Regeneración celular natural y ácidos grasos esenciales." },
                 { name: "Ácido Hialurónico Botánico", desc: "Retención de humedad de origen vegetal." },
-              ].map((ing) => (
+              ]).map((ing) => (
                 <div key={ing.name} className="p-4 bg-surface-container-low rounded-xl">
                   <h4 className="font-label-md text-primary mb-1">{ing.name}</h4>
                   <p className="text-label-sm text-on-surface-variant">{ing.desc}</p>
@@ -155,11 +154,11 @@ export default function ProductDetailPage({
               "Un ritual para despertar tu belleza interior."
             </p>
             <ol className="space-y-3">
-              {[
+              {(product.usageSteps ?? [
                 "Limpia tu rostro con el Cleanser Botanical.",
                 "Aplica 3–4 gotas del producto sobre la piel ligeramente húmeda.",
                 "Realiza masajes ascendentes hasta su total absorción.",
-              ].map((step, i) => (
+              ]).map((step, i) => (
                 <li key={i} className="flex space-x-4">
                   <span className="font-headline-sm text-primary-container flex-shrink-0">
                     {String(i + 1).padStart(2, "0")}

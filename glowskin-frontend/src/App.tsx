@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CartProvider, useCart } from "./context/CartContext";
 import HeroBanner from "./components/HeroBanner";
 import Filters from "./components/Filters";
@@ -8,11 +8,13 @@ import WhatsAppButton from "./components/WhatsAppButton";
 import CategoriesPage from "./components/CategoriesPage";
 import WishlistPage from "./components/WishlistPage";
 import ProductDetailPage from "./components/ProductDetailPage";
+import AdminPage from "./components/AdminPage";
 import type { Product } from "./services/products";
 
-type Page = "home" | "categories" | "wishlist" | "product";
+type Page = "home" | "categories" | "wishlist" | "product" | "admin";
 
-const MOCK_PRODUCTS: Product[] = [
+// Initial product catalogue — mutated at runtime via the admin panel
+const INITIAL_PRODUCTS: Product[] = [
   {
     id: 1,
     name: "Serum Iluminador",
@@ -91,11 +93,40 @@ function AppContent() {
   const { items } = useCart();
   const [activePage, setActivePage] = useState<Page>("home");
   const [activeCategory, setActiveCategory] = useState("Todos");
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  // Secret admin access: type /admin anywhere on the page
+  const bufferRef = useRef("");
+  useEffect(() => {
+    const SECRET = "/admin";
+    const handler = (e: KeyboardEvent) => {
+      // Ignore when typing in an input/textarea
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      bufferRef.current = (bufferRef.current + e.key).slice(-SECRET.length);
+      if (bufferRef.current === SECRET) {
+        bufferRef.current = "";
+        setActivePage("admin");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   const cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
+
+  // Keep selectedProduct fresh when admin edits it
+  const handleUpdateProducts = (updated: Product[]) => {
+    setProducts(updated);
+    if (selectedProduct) {
+      const refreshed = updated.find((p) => p.id === selectedProduct.id);
+      if (refreshed) setSelectedProduct(refreshed);
+    }
+  };
 
   const handleSelectProduct = (product: Product) => {
     setSelectedProduct(product);
@@ -122,21 +153,21 @@ function AppContent() {
   const filtered = (() => {
     const q = searchQuery.trim().toLowerCase();
     if (q) {
-      return MOCK_PRODUCTS.filter(
+      return products.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
           String(p.id).includes(q)
       );
     }
     return activeCategory === "Todos"
-      ? MOCK_PRODUCTS
-      : MOCK_PRODUCTS.filter((p) => p.category === activeCategory);
+      ? products
+      : products.filter((p) => p.category === activeCategory);
   })();
 
   return (
     <>
-      {/* ========== TOP APP BAR — hidden on product detail (has its own back button) ========== */}
-      {activePage !== "product" && (
+      {/* ========== TOP APP BAR — hidden on product detail and admin (both have their own header) ========== */}
+      {activePage !== "product" && activePage !== "admin" && (
       <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-tablet lg:px-margin-desktop h-14 sm:h-16 bg-surface/95 backdrop-blur-md border-b border-outline-variant/30">
         <button
           className="md:hidden material-symbols-outlined text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform text-[24px] sm:text-[28px]"
@@ -200,7 +231,7 @@ function AppContent() {
       )}
 
       {/* ========== SEARCH OVERLAY ========== */}
-      {isSearchOpen && activePage !== "product" && (
+      {isSearchOpen && activePage !== "product" && activePage !== "admin" && (
         <>
           {/* Backdrop — click fuera para cerrar */}
           <div
@@ -260,9 +291,15 @@ function AppContent() {
       {activePage === "product" && selectedProduct ? (
         <ProductDetailPage
           product={selectedProduct}
-          relatedProducts={MOCK_PRODUCTS.filter((p) => p.id !== selectedProduct.id).slice(0, 5)}
+          relatedProducts={products.filter((p) => p.id !== selectedProduct.id).slice(0, 5)}
           onBack={() => setActivePage("home")}
           onSelectProduct={handleSelectProduct}
+        />
+      ) : activePage === "admin" ? (
+        <AdminPage
+          products={products}
+          onUpdateProducts={handleUpdateProducts}
+          onGoToStore={() => setActivePage("home")}
         />
       ) : activePage === "categories" ? (
         <CategoriesPage onCategorySelect={handleCategorySelect} />
@@ -342,13 +379,13 @@ function AppContent() {
         </main>
       )}
 
-      {activePage !== "product" && <WhatsAppButton />}
+      {activePage !== "product" && activePage !== "admin" && <WhatsAppButton />}
       {activePage !== "product" && (
         <BottomNav activePage={activePage} onNavigate={setActivePage} />
       )}
 
       {/* ========== DESKTOP FOOTER ========== */}
-      {activePage !== "product" && (
+      {activePage !== "product" && activePage !== "admin" && (
         <footer className="hidden md:block bg-surface-container-lowest border-t border-outline-variant/30 pt-12 pb-8 px-margin-desktop">
           <div className="max-w-container-max mx-auto">
             {/* Top row */}
@@ -432,9 +469,18 @@ function AppContent() {
 
             {/* Bottom row */}
             <div className="border-t border-outline-variant/40 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2">
-              <p className="font-body-md text-xs text-on-surface-variant">
-                © 2025 GlowSkin · Tienda digital · Todos los derechos reservados.
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="font-body-md text-xs text-on-surface-variant">
+                  © 2025 GlowSkin · Tienda digital · Todos los derechos reservados.
+                </p>
+                <button
+                  onClick={() => setActivePage("admin")}
+                  className="text-[10px] text-outline hover:text-on-surface-variant transition-colors"
+                  aria-label="Panel de administración"
+                >
+                  Admin
+                </button>
+              </div>
               <div className="flex items-center gap-4">
                 <a
                   href="https://wa.me/message/P7BWJKUAM2AEP1"

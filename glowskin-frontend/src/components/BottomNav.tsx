@@ -1,9 +1,10 @@
-type Page = "home" | "categories" | "wishlist";
+type Page = "home" | "categories" | "wishlist" | "admin";
 
 const items: { icon: string; label: string; page: Page }[] = [
   { icon: "home", label: "Home", page: "home" },
   { icon: "category", label: "Categorías", page: "categories" },
   { icon: "favorite", label: "Mi Lista", page: "wishlist" },
+  // Admin tab is intentionally hidden — access via /admin
 ];
 
 interface BottomNavProps {

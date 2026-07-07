@@ -7,6 +7,11 @@ export interface Product {
   image: string;
   alt: string;
   category: string;
+  // Rich content shown in product detail page (editable from admin)
+  description?: string;
+  benefitPoints?: string[];
+  ingredients?: { name: string; desc: string }[];
+  usageSteps?: string[];
 }
 
 export async function getProducts(): Promise<Product[]> {
