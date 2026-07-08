@@ -10,93 +10,36 @@ import WishlistPage from "./components/WishlistPage";
 import ProductDetailPage from "./components/ProductDetailPage";
 import AdminPage from "./components/AdminPage";
 import type { Product } from "./services/products";
+import { getProducts } from "./services/products";
 
 type Page = "home" | "categories" | "wishlist" | "product" | "admin";
-
-// Initial product catalogue — mutated at runtime via the admin panel
-const INITIAL_PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: "Serum Iluminador",
-    price: 42.0,
-    category: "Skincare",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuB64h8uYsvpRJxvxj84lP0gY15xXANP9yOVR0AfJMeTUi_5Uge73fDjtSEq84K1WVjvlVuSFIa4A7mD10W0NhurrmyeXS_gbMLuMR0YjAIu8P7eI1IDMH4DVGdxblh2kK6HoTa1Cp_9PHHN4GE3U_0v3RxG7xsA04iTn-HTM8IwbINHF6EInde4mrB-k8xnA7bIlO9r5mPVVeXXoeuEz1glw1x3Ahli0kG9fHc8BBIEvwlp8btb2LyMkg",
-    alt: "Close-up of a premium minimalist glass bottle with a white dropper",
-  },
-  {
-    id: 2,
-    name: "Bálsamo para Barba",
-    price: 28.0,
-    category: "Cuidado Masculino",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBE2KhpEWcTeZKfJQdZCQdYMnyfQvmp058rYTzPPEUR4du4ImbC5xJnuwZ0bmSyX6Rhpp6USU8d6wRCRgvCz63ntG0uMmi7senQ0vrZ07j1tK-tBqR1JAbfyuqJ3jbCj4kvVupA7IgC-z3QOgm7XAY3JNB-o4xCRWWzSoQJs283aesGTQ_ECV6ZH9jVnEtRMLcGjv8fLgGirV_8QZpw4SYvkkCyLs6-Y6UIW_j0JU3itGdyZ0qduINcrg",
-    alt: "Matte black tin of beard balm",
-  },
-  {
-    id: 3,
-    name: "Vela Calma Profunda",
-    price: 35.0,
-    category: "Aromas y Velas",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCvHMNebinBQ5Cz4bhbuizmSDe_mPK668h7wkD6y2eNaWfg_Ht_rhA6ChLMsT1hIEI5b16Z0XZMRlK1NSUNgPA_pXJeyj_akebcSJNF84lsKx0hKsL0ZIdCOYAvdzeZBUqTrxgRG5UTpaCJ2Ayi9a1O4BZEsLvtyPkipSvGhxlewGwJbhnKlYDo_2Mp89TiEfvv1s2uFZFYjcfRzoFckCJdmpnMZwKI2Zf_gMXXrHDB17yRUSvhYTtRIw",
-    alt: "Minimalist scented candle in amber glass jar",
-  },
-  {
-    id: 4,
-    name: "Hidratante Facial Hombre",
-    price: 32.0,
-    category: "Cuidado Masculino",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDtIfJmK0ZfURZsaCegYw_ijfx_oOR9toMYSgvG74Kmja5a8Pfee-IKZhfski2B22GeWqF1Pp-e_StLTqj8GpqcYBtkp4yTEc89-nQBgyha2UUl1_DCoSAsFI3AB74S02TFwdkOO3P3HEd_qJppBZmfYDtx5S8owaZrdN1TB5_8X0KJ3DWpsEZD8LN1VuBNfJ27KFdeT8cFYmtVr7xoB9SH_5tBumLtvuFiz_wgu6wumNjVXrOZrgqKjA",
-    alt: "Minimalist dark blue tube of hydrating facial cream",
-  },
-  {
-    id: 5,
-    name: "Crema Corporal Nutritiva",
-    price: 38.0,
-    category: "Cuidado Corporal",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCbxRbdQiW3RNA3i4WAH6leHH7gt5HqFjF8x2wpOIZtBapQbsEzTiUcr1Zkuw0o2iPIybWZQoMz2FyC9fpqPAxclEh_VGbZvHlk6lKnMPqg82oVzlMdEtgu37IXcSPkHJugEGVaC3GPOOn7cZbKmnPp93DBIK0sRSKuUANHWgXzIZSGmtm6iMtwMUEEYG99abkAWxP3XD61aYbRUsMxfj8W9SIpIjU3ZV61zQJw8w5kbCpRYqrM8j73kw",
-    alt: "Crema corporal en tarro de vidrio",
-  },
-  {
-    id: 6,
-    name: "Aceite Esencial Lavanda",
-    price: 22.0,
-    category: "Aromas y Velas",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCvHMNebinBQ5Cz4bhbuizmSDe_mPK668h7wkD6y2eNaWfg_Ht_rhA6ChLMsT1hIEI5b16Z0XZMRlK1NSUNgPA_pXJeyj_akebcSJNF84lsKx0hKsL0ZIdCOYAvdzeZBUqTrxgRG5UTpaCJ2Ayi9a1O4BZEsLvtyPkipSvGhxlewGwJbhnKlYDo_2Mp89TiEfvv1s2uFZFYjcfRzoFckCJdmpnMZwKI2Zf_gMXXrHDB17yRUSvhYTtRIw",
-    alt: "Botella de aceite esencial",
-  },
-  {
-    id: 7,
-    name: "Exfoliante Facial Suave",
-    price: 26.0,
-    category: "Skincare",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuB64h8uYsvpRJxvxj84lP0gY15xXANP9yOVR0AfJMeTUi_5Uge73fDjtSEq84K1WVjvlVuSFIa4A7mD10W0NhurrmyeXS_gbMLuMR0YjAIu8P7eI1IDMH4DVGdxblh2kK6HoTa1Cp_9PHHN4GE3U_0v3RxG7xsA04iTn-HTM8IwbINHF6EInde4mrB-k8xnA7bIlO9r5mPVVeXXoeuEz1glw1x3Ahli0kG9fHc8BBIEvwlp8btb2LyMkg",
-    alt: "Tubo de exfoliante facial",
-  },
-  {
-    id: 8,
-    name: "Vitamina C + Zinc",
-    price: 18.0,
-    category: "Suplementos",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDtIfJmK0ZfURZsaCegYw_ijfx_oOR9toMYSgvG74Kmja5a8Pfee-IKZhfski2B22GeWqF1Pp-e_StLTqj8GpqcYBtkp4yTEc89-nQBgyha2UUl1_DCoSAsFI3AB74S02TFwdkOO3P3HEd_qJppBZmfYDtx5S8owaZrdN1TB5_8X0KJ3DWpsEZD8LN1VuBNfJ27KFdeT8cFYmtVr7xoB9SH_5tBumLtvuFiz_wgu6wumNjVXrOZrgqKjA",
-    alt: "Frasco de suplementos",
-  },
-];
 
 function AppContent() {
   const { items } = useCart();
   const [activePage, setActivePage] = useState<Page>("home");
   const [activeCategory, setActiveCategory] = useState("Todos");
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  const reloadProducts = async () => {
+    try {
+      const data = await getProducts();
+      setProducts(data);
+      setLoadError(null);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Error al cargar productos");
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  useEffect(() => {
+    void reloadProducts();
+  }, []);
 
   // Secret admin access: type /admin anywhere on the page
   const bufferRef = useRef("");
@@ -119,13 +62,17 @@ function AppContent() {
 
   const cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
-  // Keep selectedProduct fresh when admin edits it
-  const handleUpdateProducts = (updated: Product[]) => {
-    setProducts(updated);
-    if (selectedProduct) {
-      const refreshed = updated.find((p) => p.id === selectedProduct.id);
-      if (refreshed) setSelectedProduct(refreshed);
-    }
+  // Reload products from API after admin changes, then refresh selected product if open
+  const handleUpdateProducts = (_updated: Product[]) => {
+    void (async () => {
+      const data = await getProducts().catch(() => null);
+      if (!data) return;
+      setProducts(data);
+      if (selectedProduct) {
+        const refreshed = data.find((p) => p.id === selectedProduct.id);
+        if (refreshed) setSelectedProduct(refreshed);
+      }
+    })();
   };
 
   const handleSelectProduct = (product: Product) => {
@@ -347,6 +294,23 @@ function AppContent() {
 
           {/* Product Grid */}
           <section className="px-margin-mobile md:px-margin-tablet lg:px-margin-desktop max-w-container-max mx-auto">
+            {loadingProducts ? (
+              <div className="flex justify-center items-center py-20">
+                <span className="material-symbols-outlined text-primary text-4xl animate-spin">progress_activity</span>
+              </div>
+            ) : loadError ? (
+              <div className="text-center py-16 space-y-3">
+                <span className="material-symbols-outlined text-5xl text-error block">cloud_off</span>
+                <p className="text-on-surface-variant font-body-md">{loadError}</p>
+                <button
+                  onClick={() => { setLoadingProducts(true); void reloadProducts(); }}
+                  className="mt-2 font-label-md text-label-md text-primary hover:opacity-80 transition-opacity"
+                >
+                  Reintentar
+                </button>
+              </div>
+            ) : (
+            <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-gutter">
               {filtered.map((product) => (
                 <ProductCard
@@ -374,6 +338,8 @@ function AppContent() {
                   </button>
                 )}
               </div>
+            )}
+            </>
             )}
           </section>
         </main>

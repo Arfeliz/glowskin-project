@@ -48,3 +48,5 @@ Thumbs.db
 # === VERCEL / RENDER (opcionales) ===
 .cache/
 .turbo/
+
+/chequeos

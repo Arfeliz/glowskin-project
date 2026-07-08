@@ -1,10 +1,12 @@
-﻿import { useState } from "react";
+﻿import { useState, useEffect } from "react";
 import type { Product } from "../services/products";
+import {
+  loginAdmin,
+  createProduct as apiCreateProduct,
+  updateProduct as apiUpdateProduct,
+  deleteProduct as apiDeleteProduct,
+} from "../services/products";
 import AdminProductEditPage, { type AdminProduct } from "./AdminProductEditPage";
-
-// ── Demo credentials — replace with real backend auth before production ──
-const DEMO_EMAIL = "admin@glowskin.com";
-const DEMO_PASSWORD = "gloowskin2025";
 
 const STOCK_DEFAULTS = [24, 3, 12, 1, 8, 15, 9, 22];
 const CATEGORIES = ["Skincare", "Cuidado Corporal", "Aromas y Velas", "Suplementos", "Cuidado Masculino"];
@@ -32,9 +34,11 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 export default function AdminPage({ products, onUpdateProducts, onGoToStore }: AdminPageProps) {
   // Auth
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [token, setToken] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   // Navigation
@@ -42,10 +46,16 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
 
   // Editable inventory
   const [adminProducts, setAdminProducts] = useState<AdminProduct[]>(() =>
-    products.map((p, i) => ({ ...p, stock: STOCK_DEFAULTS[i] ?? 10 }))
+    products.map((p, i) => ({ ...p, stock: p.stock ?? STOCK_DEFAULTS[i] ?? 10 }))
   );
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Sync adminProducts when parent reloads products from API
+  useEffect(() => {
+    setAdminProducts(products.map((p, i) => ({ ...p, stock: p.stock ?? STOCK_DEFAULTS[i] ?? 10 })));
+  }, [products]);
 
   // Config
   const [waLink, setWaLink] = useState("https://wa.me/message/P7BWJKUAM2AEP1");
@@ -57,14 +67,17 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
 
   // Auth
   const handleLogin = () => {
-    if (email.trim() === DEMO_EMAIL && password === DEMO_PASSWORD) {
-      setIsLoggedIn(true);
-      setAuthError("");
-    } else {
-      setAuthError("Usuario o contraseña incorrectos.");
-    }
+    setAuthLoading(true);
+    setAuthError("");
+    loginAdmin(email.trim(), password)
+      .then((t) => {
+        setToken(t);
+        setIsLoggedIn(true);
+      })
+      .catch(() => setAuthError("Usuario o contraseña incorrectos."))
+      .finally(() => setAuthLoading(false));
   };
-  const handleLogout = () => { setIsLoggedIn(false); setEmail(""); setPassword(""); };
+  const handleLogout = () => { setIsLoggedIn(false); setToken(""); setEmail(""); setPassword(""); };
 
   // Inventory
   const [fullEditProduct, setFullEditProduct] = useState<AdminProduct | null>(null);
@@ -75,24 +88,32 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
     setIsNewProduct(true);
   };
   const handleSaveProduct = (p: AdminProduct) => {
-    let updated: AdminProduct[];
-    if (isNewProduct) {
-      const withId = { ...p, id: Date.now() };
-      updated = [...adminProducts, withId];
-    } else {
-      updated = adminProducts.map((x) => (x.id === p.id ? p : x));
-    }
-    setAdminProducts(updated);
-    onUpdateProducts(updated.map(({ stock: _s, ...rest }) => rest));
-    setFullEditProduct(null);
-    setActiveTab("inventory");
+    setSaving(true);
+    const apiCall = isNewProduct
+      ? apiCreateProduct({ name: p.name, price: p.price, image: p.image, alt: p.alt, category: p.category, stock: p.stock, description: p.description, benefitPoints: p.benefitPoints, ingredients: p.ingredients, usageSteps: p.usageSteps }, token)
+      : apiUpdateProduct(p.id, p, token);
+    apiCall
+      .then((saved) => {
+        const asAdmin: AdminProduct = { ...saved, stock: p.stock };
+        setAdminProducts((prev) =>
+          isNewProduct ? [...prev, asAdmin] : prev.map((x) => (x.id === p.id ? asAdmin : x))
+        );
+        onUpdateProducts([]);
+        setFullEditProduct(null);
+        setActiveTab("inventory");
+      })
+      .catch(() => { /* error silenciado — podría mostrarse un toast */ })
+      .finally(() => setSaving(false));
   };
   const handleDelete = (id: number) => {
     if (deletingId === id) {
-      const updated = adminProducts.filter((p) => p.id !== id);
-      setAdminProducts(updated);
-      onUpdateProducts(updated.map(({ stock: _s, ...rest }) => rest));
-      setDeletingId(null);
+      apiDeleteProduct(id, token)
+        .then(() => {
+          setAdminProducts((prev) => prev.filter((p) => p.id !== id));
+          onUpdateProducts([]);
+          setDeletingId(null);
+        })
+        .catch(() => setDeletingId(null));
     } else {
       setDeletingId(id);
     }
@@ -161,9 +182,10 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
             </div>
             <button
               onClick={handleLogin}
-              className="w-full bg-primary text-on-primary py-4 rounded-full font-label-md text-label-md shadow-lg active:scale-95 transition-all"
+              disabled={authLoading}
+              className="w-full bg-primary text-on-primary py-4 rounded-full font-label-md text-label-md shadow-lg active:scale-95 transition-all disabled:opacity-60"
             >
-              Entrar al Panel
+              {authLoading ? "Verificando..." : "Entrar al Panel"}
             </button>
           </div>
         </div>
