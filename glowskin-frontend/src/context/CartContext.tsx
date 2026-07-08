@@ -58,10 +58,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       (i) => `• ${i.name} (x${i.quantity}) — $${(i.price * i.quantity).toFixed(2)}`
     );
     const text = encodeURIComponent(
-      `¡Hola! Me interesa consultar por los siguientes productos de GlowSkin 🌿\n\n` +
+      `¡Hola! Me interesa consultar por los siguientes productos de GlowSkin1 \n\n` +
       `${lines.join("\n")}\n\n` +
-      `💰 Total: $${total.toFixed(2)}\n\n` +
-      `¿Podrían asesorarme? 😊`
+      ` Total: $${total.toFixed(2)}\n\n` +
+      `¿Podrían asesorarme? `
     );
     const url = waPhone
       ? `https://wa.me/${waPhone}?text=${text}`
