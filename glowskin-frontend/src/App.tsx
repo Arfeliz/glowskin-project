@@ -26,6 +26,7 @@ function AppContent() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const reloadProducts = () => {
     getProducts()
@@ -121,6 +122,7 @@ function AppContent() {
       {activePage !== "product" && activePage !== "admin" && (
       <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-tablet lg:px-margin-desktop h-14 sm:h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/25">
         <button
+          onClick={() => setIsDrawerOpen(true)}
           className="md:hidden material-symbols-outlined text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform text-[24px] sm:text-[28px]"
           aria-label="Menú"
         >
@@ -179,6 +181,69 @@ function AppContent() {
           </button>
         </div>
       </header>
+      )}
+
+      {/* ========== MOBILE DRAWER ========== */}
+      {isDrawerOpen && (
+        <div
+          className="fixed inset-0 z-[60] md:hidden"
+          onClick={() => setIsDrawerOpen(false)}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" />
+
+          {/* Panel */}
+          <nav
+            className="absolute top-0 left-0 h-full w-[72vw] max-w-[300px] bg-surface flex flex-col animate-fade-up"
+            style={{ animationDuration: "0.3s" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Cabecera del drawer */}
+            <div className="flex items-center justify-between px-6 h-14 border-b border-outline-variant/30">
+              <span className="font-headline-md text-headline-sm text-primary tracking-[0.18em]">GLOWSKIN</span>
+              <button
+                onClick={() => setIsDrawerOpen(false)}
+                className="material-symbols-outlined text-on-surface-variant active:scale-90 transition-all"
+              >close</button>
+            </div>
+
+            {/* Links principales */}
+            <div className="flex-1 px-4 py-6 space-y-1">
+              {([
+                ["home",       "home",     "Inicio"],
+                ["categories", "category", "Categorías"],
+                ["wishlist",   "favorite", "Mi Lista"],
+              ] as [Page, string, string][]).map(([page, icon, label]) => (
+                <button
+                  key={page}
+                  onClick={() => { setActivePage(page); setIsDrawerOpen(false); }}
+                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-label-md text-label-md transition-all active:scale-95 ${
+                    activePage === page
+                      ? "bg-primary text-on-primary"
+                      : "text-on-surface hover:bg-surface-container"
+                  }`}
+                >
+                  <span
+                    className="material-symbols-outlined text-[22px]"
+                    style={activePage === page ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                  >{icon}</span>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Acceso admin — parte inferior */}
+            <div className="px-4 pb-8 pt-4 border-t border-outline-variant/20">
+              <button
+                onClick={() => { setActivePage("admin"); setIsDrawerOpen(false); window.scrollTo({ top: 0 }); }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container active:scale-95 transition-all"
+              >
+                <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+                <span className="font-label-sm text-label-sm">Panel Admin</span>
+              </button>
+            </div>
+          </nav>
+        </div>
       )}
 
       {/* ========== SEARCH OVERLAY ========== */}

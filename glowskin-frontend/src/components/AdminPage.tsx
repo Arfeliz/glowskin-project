@@ -141,9 +141,17 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
       {!isLoggedIn && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-md px-margin-mobile">
           <div
-            className="w-full max-w-sm bg-surface-container-lowest p-8 rounded-2xl border border-outline-variant/30 space-y-6"
+            className="relative w-full max-w-sm bg-surface-container-lowest p-8 rounded-2xl border border-outline-variant/30 space-y-6"
             style={{ boxShadow: "0px 10px 30px rgba(220, 174, 150, 0.18)" }}
           >
+            {/* Botón volver — esquina superior derecha */}
+            <button
+              onClick={onGoToStore}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container active:scale-90 transition-all"
+              aria-label="Volver a la tienda"
+            >
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
             <div className="text-center space-y-2">
               <span className="material-symbols-outlined text-primary text-4xl block">lock</span>
               <h2 className="font-headline-sm text-headline-sm text-on-surface">Acceso Restringido</h2>
