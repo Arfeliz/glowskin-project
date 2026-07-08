@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { CartProvider, useCart } from "./context/CartContext";
+import { CartProvider } from "./context/CartContext";
+import { ConfigProvider } from "./context/ConfigContext";
+import { useCart } from "./context/CartContext";
 import HeroBanner from "./components/HeroBanner";
 import Filters from "./components/Filters";
 import ProductCard from "./components/ProductCard";
@@ -510,9 +512,11 @@ function AppContent() {
 
 function App() {
   return (
-    <CartProvider>
-      <AppContent />
-    </CartProvider>
+    <ConfigProvider>
+      <CartProvider>
+        <AppContent />
+      </CartProvider>
+    </ConfigProvider>
   );
 }
 

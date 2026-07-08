@@ -6,6 +6,8 @@ import {
   updateProduct as apiUpdateProduct,
   deleteProduct as apiDeleteProduct,
 } from "../services/products";
+import { updateConfig } from "../services/config";
+import { useConfig } from "../context/ConfigContext";
 import AdminProductEditPage, { type AdminProduct } from "./AdminProductEditPage";
 
 const STOCK_DEFAULTS = [24, 3, 12, 1, 8, 15, 9, 22];
@@ -58,9 +60,15 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
     setAdminProducts(products.map((p, i) => ({ ...p, stock: p.stock ?? STOCK_DEFAULTS[i] ?? 10 })));
   }
 
+  const { waPhone: configWaPhone, setWaPhone: setConfigPhone } = useConfig();
+
   // Config
-  const [waLink, setWaLink] = useState("https://wa.me/message/P7BWJKUAM2AEP1");
-  const [waEditing, setWaEditing] = useState(false);
+  const [waPhone, setWaPhone] = useState("");
+  const [prevConfigPhone, setPrevConfigPhone] = useState("");
+  if (prevConfigPhone !== configWaPhone) {
+    setPrevConfigPhone(configWaPhone);
+    setWaPhone(configWaPhone);
+  }
   const [waSaved, setWaSaved] = useState(false);
   const [igLink, setIgLink] = useState("https://www.instagram.com/gloowskin1/");
   const [ttLink, setTtLink] = useState("https://www.tiktok.com/@gloowskin2");
@@ -452,33 +460,36 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
                 <h3 className="font-label-md text-label-md text-on-surface uppercase tracking-widest">WhatsApp</h3>
               </div>
               <p className="text-xs text-on-surface-variant leading-relaxed">
-                Enlace donde los clientes recibirán asesoría y confirmación de pedidos.
+                Número al que llegarán los pedidos del carrito. Los clientes verán la lista de productos al abrir el chat.
               </p>
               <div className="space-y-1">
-                <FieldLabel>Enlace</FieldLabel>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={waLink}
-                    readOnly={!waEditing}
-                    onChange={(e) => setWaLink(e.target.value)}
-                    className={`w-full pl-4 pr-12 py-3 rounded-lg border text-sm outline-none transition-colors ${
-                      waEditing ? "border-primary bg-white" : "border-outline-variant bg-white"
-                    }`}
-                  />
-                  <button
-                    onClick={() => setWaEditing((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-primary active:scale-90 transition-transform"
-                  >
-                    <span className="material-symbols-outlined">{waEditing ? "check" : "edit"}</span>
-                  </button>
-                </div>
+                <FieldLabel>Número de WhatsApp</FieldLabel>
+                <input
+                  type="tel"
+                  value={waPhone}
+                  onChange={(e) => setWaPhone(e.target.value.replace(/\D/g, ""))}
+                  placeholder="ej. 5491112345678"
+                  className="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary text-sm bg-white outline-none transition-colors"
+                />
+                <p className="text-[11px] text-on-surface-variant pl-1">
+                  Solo dígitos con código de país (sin + ni espacios). Argentina: <span className="font-semibold">549</span> + cód. área + número.
+                </p>
               </div>
               <button
-                onClick={() => { setWaEditing(false); setWaSaved(true); setTimeout(() => setWaSaved(false), 2000); }}
+                onClick={() => {
+                  const clean = waPhone.replace(/\D/g, "");
+                  setWaPhone(clean);
+                  updateConfig({ wa_phone: clean }, token)
+                    .then(() => {
+                      setConfigPhone(clean);
+                      setWaSaved(true);
+                      setTimeout(() => setWaSaved(false), 2000);
+                    })
+                    .catch(() => {});
+                }}
                 className="w-full bg-primary text-on-primary py-3 rounded-full font-label-md text-label-md shadow-lg active:scale-[0.98] transition-all"
               >
-                {waSaved ? "¡Guardado!" : "Guardar Cambios"}
+                {waSaved ? "¡Guardado!" : "Guardar Número"}
               </button>
             </section>
 

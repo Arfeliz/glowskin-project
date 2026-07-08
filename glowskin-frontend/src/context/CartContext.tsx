@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { useConfig } from "./ConfigContext";
 
 interface CartItem {
   id: number;
@@ -22,6 +23,8 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+
+  const { waPhone } = useConfig();
 
   const addItem = (product: Omit<CartItem, "quantity">) => {
     setItems((prev) => {
@@ -51,15 +54,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   const sendToWhatsApp = () => {
-    const message = items
-      .map((i) => `• ${i.name} x${i.quantity} — $${(i.price * i.quantity).toFixed(2)}`)
-      .join("\n");
-
-    const text = encodeURIComponent(
-      `¡Hola! Quiero consultar por estos productos:\n\n${message}\n\nTotal: $${total.toFixed(2)}`
+    const lines = items.map(
+      (i) => `• ${i.name} (x${i.quantity}) — $${(i.price * i.quantity).toFixed(2)}`
     );
-
-    window.open(`https://wa.me/message/P7BWJKUAM2AEP1?text=${text}`, "_blank");
+    const text = encodeURIComponent(
+      `¡Hola! Me interesa consultar por los siguientes productos de GlowSkin 🌿\n\n` +
+      `${lines.join("\n")}\n\n` +
+      `💰 Total: $${total.toFixed(2)}\n\n` +
+      `¿Podrían asesorarme? 😊`
+    );
+    const url = waPhone
+      ? `https://wa.me/${waPhone}?text=${text}`
+      : `https://wa.me/?text=${text}`;
+    window.open(url, "_blank");
   };
 
   return (

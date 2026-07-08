@@ -1,8 +1,13 @@
+import { useConfig } from "../context/ConfigContext";
+
 export default function WhatsAppButton() {
+  const { waPhone } = useConfig();
+  const href = waPhone ? `https://wa.me/${waPhone}` : "https://wa.me/";
+
   return (
     <a
       className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 md:bottom-8 md:right-8 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-primary rounded-full flex items-center justify-center text-white z-40 ambient-glow hover:opacity-90 hover:scale-105 active:scale-95 transition-all shadow-lg"
-      href="https://wa.me/message/P7BWJKUAM2AEP1"
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contactar por WhatsApp"

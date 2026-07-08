@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import productRoutes from "./routes/productRoutes";
 import authRoutes from "./routes/authRoutes";
+import configRoutes from "./routes/configRoutes";
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ app.use(express.json());
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/config", configRoutes);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get("/api/health", (_req, res) => {
