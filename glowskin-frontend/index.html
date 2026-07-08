@@ -132,6 +132,63 @@
       .ambient-glow {
         box-shadow: 0px 10px 30px rgba(220, 174, 150, 0.15);
       }
+
+      /* ── Refinamientos estéticos ── */
+      .elegant-shadow {
+        box-shadow: 0 4px 24px -8px rgba(122, 86, 66, 0.18), 0 2px 8px -4px rgba(122, 86, 66, 0.08);
+      }
+      .elegant-shadow-lg {
+        box-shadow: 0 18px 50px -18px rgba(122, 86, 66, 0.30), 0 8px 20px -12px rgba(122, 86, 66, 0.15);
+      }
+      .hover-lift {
+        transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .hover-lift:hover {
+        transform: translateY(-6px);
+      }
+      .text-gradient-gold {
+        background: linear-gradient(135deg, #7a5642 0%, #c69574 55%, #ecbda4 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .tracking-luxe { letter-spacing: 0.28em; }
+      .divider-dot::before {
+        content: "";
+        display: inline-block;
+        width: 4px; height: 4px;
+        border-radius: 9999px;
+        background: currentColor;
+        opacity: 0.5;
+        vertical-align: middle;
+        margin: 0 0.6em;
+      }
+
+      /* Animaciones de entrada */
+      @keyframes fade-up {
+        from { opacity: 0; transform: translateY(24px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fade-in {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      @keyframes soft-zoom {
+        from { transform: scale(1.08); }
+        to   { transform: scale(1); }
+      }
+      .animate-fade-up { animation: fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+      .animate-fade-in { animation: fade-in 1.2s ease both; }
+      .animate-soft-zoom { animation: soft-zoom 8s ease-out both; }
+      .delay-100 { animation-delay: 0.1s; }
+      .delay-200 { animation-delay: 0.2s; }
+      .delay-300 { animation-delay: 0.3s; }
+      .delay-500 { animation-delay: 0.5s; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .animate-fade-up, .animate-fade-in, .animate-soft-zoom { animation: none; }
+        .hover-lift { transition: none; }
+      }
     </style>
   </head>
   <body class="font-body-md text-on-surface antialiased">

@@ -115,14 +115,14 @@ function AppContent() {
     <>
       {/* ========== TOP APP BAR — hidden on product detail and admin (both have their own header) ========== */}
       {activePage !== "product" && activePage !== "admin" && (
-      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-tablet lg:px-margin-desktop h-14 sm:h-16 bg-surface/95 backdrop-blur-md border-b border-outline-variant/30">
+      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-tablet lg:px-margin-desktop h-14 sm:h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/25">
         <button
           className="md:hidden material-symbols-outlined text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform text-[24px] sm:text-[28px]"
           aria-label="Menú"
         >
           menu
         </button>
-        <h1 className="font-headline-md text-headline-sm sm:text-headline-md text-primary tracking-tight select-none">
+        <h1 className="font-headline-md text-headline-sm sm:text-headline-md text-primary tracking-[0.18em] select-none">
           {activePage === "categories" ? "CATEGORÍAS" : activePage === "wishlist" ? "MI LISTA" : "GLOWSKIN"}
         </h1>
         <div className="flex items-center gap-2 sm:gap-4">
@@ -292,6 +292,21 @@ function AppContent() {
             <Filters active={activeCategory} onChange={setActiveCategory} />
           )}
 
+          {/* Encabezado de sección elegante */}
+          {!searchQuery.trim() && !loadingProducts && !loadError && (
+            <div className="px-margin-mobile md:px-margin-tablet lg:px-margin-desktop max-w-container-max mx-auto text-center pt-stack-sm pb-stack-sm">
+              <span className="text-primary/80 uppercase text-label-sm font-label-sm tracking-luxe">Nuestra Colección</span>
+              <h2 className="font-headline-md text-headline-sm sm:text-headline-md text-on-surface mt-2">
+                {activeCategory === "Todos" ? "Productos Destacados" : activeCategory}
+              </h2>
+              <div className="flex items-center justify-center gap-2 mt-3">
+                <span className="h-px w-8 bg-outline-variant" />
+                <span className="material-symbols-outlined text-primary/60 text-[16px]">spa</span>
+                <span className="h-px w-8 bg-outline-variant" />
+              </div>
+            </div>
+          )}
+
           {/* Product Grid */}
           <section className="px-margin-mobile md:px-margin-tablet lg:px-margin-desktop max-w-container-max mx-auto">
             {loadingProducts ? (
@@ -311,7 +326,7 @@ function AppContent() {
               </div>
             ) : (
             <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-gutter">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-gutter">
               {filtered.map((product) => (
                 <ProductCard
                   key={product.id}
