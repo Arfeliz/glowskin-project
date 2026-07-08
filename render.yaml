@@ -1,0 +1,33 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# Despliega el backend de GlowSkin como Web Service en Render.
+# En Render: New → Blueprint → conecta este repo. Las variables marcadas
+# con "sync: false" se completan manualmente en el dashboard (son secretas).
+
+services:
+  - type: web
+    name: glowskin-backend
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: glowskin-backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: PORT
+        value: "3001"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false

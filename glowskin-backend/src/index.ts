@@ -10,7 +10,24 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:5173" }));
+// CORS_ORIGIN admite varias URLs separadas por coma (ej. producción + localhost)
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Permitir peticiones sin origin (curl, health checks, apps móviles)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origen no permitido por CORS: ${origin}`));
+      }
+    },
+  })
+);
 app.use(express.json());
 
 // ── Routes ────────────────────────────────────────────────────────────────────
