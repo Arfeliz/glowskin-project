@@ -25,20 +25,22 @@ function AppContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  const reloadProducts = async () => {
-    try {
-      const data = await getProducts();
-      setProducts(data);
-      setLoadError(null);
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "Error al cargar productos");
-    } finally {
-      setLoadingProducts(false);
-    }
+  const reloadProducts = () => {
+    getProducts()
+      .then((data) => {
+        setProducts(data);
+        setLoadError(null);
+      })
+      .catch((err: unknown) => {
+        setLoadError(err instanceof Error ? err.message : "Error al cargar productos");
+      })
+      .finally(() => {
+        setLoadingProducts(false);
+      });
   };
 
   useEffect(() => {
-    void reloadProducts();
+    reloadProducts();
   }, []);
 
   // Secret admin access: type /admin anywhere on the page
@@ -63,16 +65,16 @@ function AppContent() {
   const cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   // Reload products from API after admin changes, then refresh selected product if open
-  const handleUpdateProducts = (_updated: Product[]) => {
-    void (async () => {
-      const data = await getProducts().catch(() => null);
-      if (!data) return;
-      setProducts(data);
-      if (selectedProduct) {
-        const refreshed = data.find((p) => p.id === selectedProduct.id);
-        if (refreshed) setSelectedProduct(refreshed);
-      }
-    })();
+  const handleUpdateProducts = () => {
+    getProducts()
+      .then((data) => {
+        setProducts(data);
+        setSelectedProduct((prev) => {
+          if (!prev) return prev;
+          return data.find((p) => p.id === prev.id) ?? prev;
+        });
+      })
+      .catch(() => { /* silenciado — la tienda sigue mostrando el último catálogo */ });
   };
 
   const handleSelectProduct = (product: Product) => {

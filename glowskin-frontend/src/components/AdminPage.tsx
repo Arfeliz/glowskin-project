@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState } from "react";
 import type { Product } from "../services/products";
 import {
   loginAdmin,
@@ -50,12 +50,13 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
   );
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [saving, setSaving] = useState(false);
 
-  // Sync adminProducts when parent reloads products from API
-  useEffect(() => {
+  // Sync adminProducts when parent reloads from API (render-time update, no effect needed)
+  const [prevProducts, setPrevProducts] = useState(products);
+  if (prevProducts !== products) {
+    setPrevProducts(products);
     setAdminProducts(products.map((p, i) => ({ ...p, stock: p.stock ?? STOCK_DEFAULTS[i] ?? 10 })));
-  }, [products]);
+  }
 
   // Config
   const [waLink, setWaLink] = useState("https://wa.me/message/P7BWJKUAM2AEP1");
@@ -88,7 +89,6 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
     setIsNewProduct(true);
   };
   const handleSaveProduct = (p: AdminProduct) => {
-    setSaving(true);
     const apiCall = isNewProduct
       ? apiCreateProduct({ name: p.name, price: p.price, image: p.image, alt: p.alt, category: p.category, stock: p.stock, description: p.description, benefitPoints: p.benefitPoints, ingredients: p.ingredients, usageSteps: p.usageSteps }, token)
       : apiUpdateProduct(p.id, p, token);
@@ -102,8 +102,8 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
         setFullEditProduct(null);
         setActiveTab("inventory");
       })
-      .catch(() => { /* error silenciado — podría mostrarse un toast */ })
-      .finally(() => setSaving(false));
+      .catch(() => { /* error silenciado */ })
+      .finally(() => {});
   };
   const handleDelete = (id: number) => {
     if (deletingId === id) {
