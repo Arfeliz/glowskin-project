@@ -430,7 +430,7 @@ function AppContent() {
       )}
 
       {activePage !== "product" && activePage !== "admin" && <WhatsAppButton />}
-      {activePage !== "product" && (
+      {activePage !== "product" && activePage !== "admin" && (
         <BottomNav activePage={activePage} onNavigate={setActivePage} />
       )}
 
