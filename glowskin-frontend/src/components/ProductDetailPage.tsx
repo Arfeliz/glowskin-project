@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCart } from "../context/CartContext";
 import type { Product } from "../services/products";
+import { DEFAULT_PRODUCT_BENEFIT_POINTS, DEFAULT_PRODUCT_DESCRIPTION } from "./productContent";
 
 // ─── Accordion ────────────────────────────────────────────────────────────────
 function AccordionItem({
@@ -119,12 +120,11 @@ export default function ProductDetailPage({
         <section className="space-y-4 border-t border-outline-variant pt-stack-md">
           <AccordionItem title="Beneficios" defaultOpen>
             <p className="text-on-surface-variant leading-relaxed">
-              {product.description ??
-                "Nuestra fórmula magistral penetra profundamente para restaurar el brillo natural de tu piel. Diseñado para combatir la opacidad y las manchas leves, dejando un acabado aterciopelado y radiante desde la primera aplicación."}
+              {product.description ?? DEFAULT_PRODUCT_DESCRIPTION}
             </p>
-            {(product.benefitPoints ?? ["Hidratación profunda 24h", "Efecto antioxidante potente"]).length > 0 && (
+            {(product.benefitPoints ?? DEFAULT_PRODUCT_BENEFIT_POINTS).length > 0 && (
               <ul className="mt-4 space-y-2">
-                {(product.benefitPoints ?? ["Hidratación profunda 24h", "Efecto antioxidante potente"]).map((point) => (
+                {(product.benefitPoints ?? DEFAULT_PRODUCT_BENEFIT_POINTS).map((point) => (
                   <li key={point} className="flex items-center space-x-3">
                     <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
                     <span className="text-body-md">{point}</span>

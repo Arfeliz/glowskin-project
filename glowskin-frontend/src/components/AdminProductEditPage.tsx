@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Product } from "../services/products";
+import { DEFAULT_PRODUCT_BENEFIT_POINTS, DEFAULT_PRODUCT_DESCRIPTION } from "./productContent";
 
 const CATEGORIES = ["Skincare", "Cuidado Corporal", "Aromas y Velas", "Suplementos", "Cuidado Masculino"];
 
@@ -53,8 +54,6 @@ export default function AdminProductEditPage({
   onClose,
 }: AdminProductEditPageProps) {
   const [form, setForm] = useState<AdminProduct>({
-    description: "",
-    benefitPoints: ["Hidratación profunda 24h", "Efecto antioxidante potente"],
     ingredients: [
       { name: "Vitamina C Estabilizada", desc: "Aclara y unifica el tono de la piel sin irritación." },
       { name: "Extracto de Rosa Mosqueta", desc: "Regeneración celular natural y ácidos grasos esenciales." },
@@ -65,6 +64,8 @@ export default function AdminProductEditPage({
       "Realiza masajes ascendentes hasta su total absorción.",
     ],
     ...product,
+    description: product.description ?? DEFAULT_PRODUCT_DESCRIPTION,
+    benefitPoints: product.benefitPoints ?? [...DEFAULT_PRODUCT_BENEFIT_POINTS],
   });
 
   const set = <K extends keyof AdminProduct>(key: K, value: AdminProduct[K]) =>
