@@ -72,6 +72,8 @@ export default function AdminProductEditPage({
       "Realiza masajes ascendentes hasta su total absorción.",
     ],
     ...product,
+    image: product.images?.[0] ?? product.image,
+    images: product.images?.length ? product.images : product.image ? [product.image] : [],
     description: product.description ?? DEFAULT_PRODUCT_DESCRIPTION,
     benefitPoints: product.benefitPoints ?? [...DEFAULT_PRODUCT_BENEFIT_POINTS],
   });
@@ -105,8 +107,12 @@ export default function AdminProductEditPage({
     try {
       const uploaded = await uploadProductImage(file, token);
       setImages((current) => [uploaded, ...current.filter((image) => image.path !== uploaded.path)]);
-      set("image", uploaded.url);
-      setImageStatus("Imagen subida y seleccionada. Guarda el producto para aplicar el cambio.");
+      setForm((current) => {
+        const selected = current.images?.length ? current.images : current.image ? [current.image] : [];
+        const nextImages = selected.includes(uploaded.url) ? selected : [...selected, uploaded.url];
+        return { ...current, images: nextImages, image: nextImages[0] ?? "" };
+      });
+      setImageStatus("Imagen agregada a la galería. Guarda el producto para aplicar el cambio.");
     } catch (error) {
       setImageError(error instanceof Error ? error.message : "No se pudo subir la imagen");
     } finally {
@@ -121,7 +127,11 @@ export default function AdminProductEditPage({
     try {
       await deleteProductImage(image.path, token);
       setImages((current) => current.filter((item) => item.path !== image.path));
-      if (form.image === image.url) set("image", "");
+      setForm((current) => {
+        const selected = (current.images?.length ? current.images : current.image ? [current.image] : [])
+          .filter((url) => url !== image.url);
+        return { ...current, images: selected, image: selected[0] ?? "" };
+      });
       setImageStatus("Imagen eliminada de la biblioteca.");
     } catch (error) {
       setImageError(error instanceof Error ? error.message : "No se pudo borrar la imagen");
@@ -162,6 +172,19 @@ export default function AdminProductEditPage({
     set("usageSteps", (form.usageSteps ?? []).filter((_, idx) => idx !== i));
 
   const valid = form.name.trim().length > 0 && form.price > 0;
+  const selectedImages = form.images?.length ? form.images : form.image ? [form.image] : [];
+
+  const toggleSelectedImage = (url: string) => {
+    setForm((current) => {
+      const selected = current.images?.length ? current.images : current.image ? [current.image] : [];
+      const nextImages = selected.includes(url)
+        ? selected.filter((image) => image !== url)
+        : [...selected, url];
+      return { ...current, images: nextImages, image: nextImages[0] ?? "" };
+    });
+    setImageError("");
+    setImageStatus("Galería actualizada. Guarda el producto para aplicar el cambio.");
+  };
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -244,7 +267,7 @@ export default function AdminProductEditPage({
           </div>
 
           <div className="space-y-3">
-            <FieldLabel>Biblioteca de imágenes</FieldLabel>
+            <FieldLabel>Galería del producto ({selectedImages.length})</FieldLabel>
             <label className={`inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition-opacity ${imageBusy ? "opacity-50" : "hover:opacity-90"}`}>
               <span className="material-symbols-outlined text-[18px]">upload</span>
               {imageBusy ? "Procesando..." : "Subir imagen"}
@@ -265,15 +288,20 @@ export default function AdminProductEditPage({
             {imageStatus && <p role="status" className="text-sm text-primary">{imageStatus}</p>}
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
               {images.map((image) => (
-                <div key={image.path} className={`relative overflow-hidden rounded-lg border ${form.image === image.url ? "border-primary ring-2 ring-primary/30" : "border-outline-variant/40"}`}>
+                <div key={image.path} className={`relative overflow-hidden rounded-lg border ${selectedImages.includes(image.url) ? "border-primary ring-2 ring-primary/30" : "border-outline-variant/40"}`}>
                   <button
                     type="button"
-                    onClick={() => { set("image", image.url); setImageError(""); setImageStatus("Imagen seleccionada. Guarda el producto para aplicar el cambio."); }}
+                    onClick={() => toggleSelectedImage(image.url)}
                     className="block aspect-square w-full bg-surface-container"
-                    aria-label="Seleccionar imagen"
-                    title="Seleccionar imagen"
+                    aria-label={selectedImages.includes(image.url) ? "Quitar imagen de la galería" : "Agregar imagen a la galería"}
+                    title={selectedImages.includes(image.url) ? "Quitar de la galería" : "Agregar a la galería"}
                   >
                     <img src={image.url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    {selectedImages.includes(image.url) && (
+                      <span className="absolute bottom-1 left-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-on-primary">
+                        {selectedImages.indexOf(image.url) + 1}
+                      </span>
+                    )}
                   </button>
                   <button
                     type="button"
@@ -291,7 +319,11 @@ export default function AdminProductEditPage({
             {images.length === 0 && <p className="text-sm text-on-surface-variant">Aún no hay imágenes en la biblioteca.</p>}
             <div className="space-y-1">
               <FieldLabel>URL externa (opcional)</FieldLabel>
-              <TextInput value={form.image} onChange={(v) => set("image", v)} placeholder="https://..." />
+              <TextInput
+                value={form.image}
+                onChange={(v) => setForm((current) => ({ ...current, image: v, images: v ? [v] : [] }))}
+                placeholder="https://..."
+              />
             </div>
           </div>
 

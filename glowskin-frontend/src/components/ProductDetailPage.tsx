@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useCart } from "../context/CartContext";
 import type { Product } from "../services/products";
 import { DEFAULT_PRODUCT_BENEFIT_POINTS, DEFAULT_PRODUCT_DESCRIPTION } from "./productContent";
@@ -58,6 +58,16 @@ export default function ProductDetailPage({
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [shareMessage, setShareMessage] = useState("");
+  const [activeImage, setActiveImage] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const galleryImages = product.images?.length ? product.images : product.image ? [product.image] : [];
+
+  const showPreviousImage = () => {
+    setActiveImage((index) => (index - 1 + galleryImages.length) % galleryImages.length);
+  };
+  const showNextImage = () => {
+    setActiveImage((index) => (index + 1) % galleryImages.length);
+  };
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) {
@@ -98,7 +108,21 @@ export default function ProductDetailPage({
   return (
     <div className="min-h-screen pb-32">
       {/* ── Hero ── */}
-      <header className="relative w-full h-[300px] sm:h-[420px] md:h-[520px] overflow-hidden">
+      <header
+        className="relative w-full h-[300px] sm:h-[420px] md:h-[520px] overflow-hidden"
+        role="group"
+        aria-label={`Galería de imágenes de ${product.name}`}
+        aria-roledescription="carrusel"
+        onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null; }}
+        onTouchEnd={(event) => {
+          const startX = touchStartX.current;
+          const endX = event.changedTouches[0]?.clientX;
+          touchStartX.current = null;
+          if (startX === null || endX === undefined || Math.abs(endX - startX) < 45 || galleryImages.length < 2) return;
+          if (endX < startX) showNextImage();
+          else showPreviousImage();
+        }}
+      >
         <button
           onClick={onBack}
           className="absolute top-4 left-4 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-surface/80 backdrop-blur-md text-on-surface active:scale-95 transition-transform"
@@ -121,10 +145,42 @@ export default function ProductDetailPage({
         )}
         <img
           className="w-full h-full object-cover"
-          src={product.image}
+          src={galleryImages[activeImage] ?? product.image}
           alt={product.alt}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
+        {galleryImages.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={showPreviousImage}
+              className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-surface/80 text-on-surface backdrop-blur-md active:scale-95"
+              aria-label="Imagen anterior"
+            >
+              <span className="material-symbols-outlined">chevron_left</span>
+            </button>
+            <button
+              type="button"
+              onClick={showNextImage}
+              className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-surface/80 text-on-surface backdrop-blur-md active:scale-95"
+              aria-label="Imagen siguiente"
+            >
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+            <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2" aria-label="Seleccionar imagen">
+              {galleryImages.map((image, index) => (
+                <button
+                  key={`${image}-${index}`}
+                  type="button"
+                  onClick={() => setActiveImage(index)}
+                  className={`h-2.5 w-2.5 rounded-full border border-white transition-colors ${activeImage === index ? "bg-white" : "bg-black/30"}`}
+                  aria-label={`Ver imagen ${index + 1} de ${galleryImages.length}`}
+                  aria-current={activeImage === index ? "true" : undefined}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </header>
 
       {/* ── Content ── */}

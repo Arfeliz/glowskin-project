@@ -8,6 +8,7 @@ interface DbProduct {
   name: string;
   price: number;
   image: string;
+  images: string[] | null;
   alt: string;
   category: string;
   stock: number;
@@ -22,6 +23,7 @@ interface ApiProduct {
   name: string;
   price: number;
   image: string;
+  images?: string[];
   alt: string;
   category: string;
   stock: number;
@@ -38,11 +40,13 @@ function toApi(row: DbProduct): ApiProduct {
     id: row.id,
     name: row.name,
     price: row.price,
-    image: row.image,
+    image: row.images?.[0] ?? row.image,
     alt: row.alt,
     category: row.category,
     stock: row.stock,
   };
+  const images = row.images?.length ? row.images : row.image ? [row.image] : [];
+  if (images.length) product.images = images;
   if (row.description)    product.description   = row.description;
   if (row.benefit_points) product.benefitPoints = row.benefit_points;
   if (row.ingredients)    product.ingredients   = row.ingredients;
@@ -54,7 +58,16 @@ function toDb(body: Partial<ApiProduct>): Partial<DbProduct> {
   const row: Partial<DbProduct> = {};
   if (body.name        !== undefined) row.name         = body.name;
   if (body.price       !== undefined) row.price        = body.price;
-  if (body.image       !== undefined) row.image        = body.image;
+  if (body.images !== undefined) {
+    const images = Array.isArray(body.images)
+      ? body.images.filter((image): image is string => typeof image === "string" && image.trim().length > 0)
+      : [];
+    row.images = images;
+    row.image = images[0] ?? "";
+  } else if (body.image !== undefined) {
+    row.image = body.image;
+    row.images = body.image ? [body.image] : [];
+  }
   if (body.alt         !== undefined) row.alt          = body.alt;
   if (body.category    !== undefined) row.category     = body.category;
   if (body.stock       !== undefined) row.stock        = body.stock;

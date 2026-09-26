@@ -363,6 +363,7 @@ function AppContent() {
       {activePage === "product" ? (
         selectedProduct ? (
           <ProductDetailPage
+            key={selectedProduct.id}
             product={selectedProduct}
             relatedProducts={products.filter((p) => p.id !== selectedProduct.id).slice(0, 5)}
             onBack={() => navigateTo("home")}

@@ -71,7 +71,7 @@ export async function deleteProductImage(req: Request, res: Response): Promise<v
   const url = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
   const { data: products, error: productsError } = await supabase
     .from("products")
-    .select("id")
+    .select("id, images")
     .eq("image", url)
     .limit(1);
 
@@ -80,6 +80,21 @@ export async function deleteProductImage(req: Request, res: Response): Promise<v
     return;
   }
   if (products?.length) {
+    res.status(409).json({ error: "No se puede borrar: esta imagen está asignada a un producto" });
+    return;
+  }
+
+  const { data: productsWithImage, error: imagesError } = await supabase
+    .from("products")
+    .select("id")
+    .contains("images", [url])
+    .limit(1);
+
+  if (imagesError) {
+    res.status(500).json({ error: imagesError.message });
+    return;
+  }
+  if (productsWithImage?.length) {
     res.status(409).json({ error: "No se puede borrar: esta imagen está asignada a un producto" });
     return;
   }

@@ -98,7 +98,7 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
   };
   const handleSaveProduct = (p: AdminProduct) => {
     const apiCall = isNewProduct
-      ? apiCreateProduct({ name: p.name, price: p.price, image: p.image, alt: p.alt, category: p.category, stock: p.stock, description: p.description, benefitPoints: p.benefitPoints, ingredients: p.ingredients, usageSteps: p.usageSteps }, token)
+      ? apiCreateProduct({ name: p.name, price: p.price, image: p.image, images: p.images, alt: p.alt, category: p.category, stock: p.stock, description: p.description, benefitPoints: p.benefitPoints, ingredients: p.ingredients, usageSteps: p.usageSteps }, token)
       : apiUpdateProduct(p.id, p, token);
     apiCall
       .then((saved) => {
