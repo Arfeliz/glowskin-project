@@ -16,9 +16,23 @@ import { getProducts } from "./services/products";
 
 type Page = "home" | "categories" | "wishlist" | "product" | "admin";
 
+function getRouteFromUrl(): { page: Page; productId: number | null } {
+  const params = new URLSearchParams(window.location.search);
+  const productId = Number(params.get("producto"));
+  if (Number.isInteger(productId) && productId > 0) {
+    return { page: "product", productId };
+  }
+
+  const page = params.get("pagina");
+  if (page === "categories" || page === "wishlist" || page === "admin") {
+    return { page, productId: null };
+  }
+  return { page: "home", productId: null };
+}
+
 function AppContent() {
   const { items } = useCart();
-  const [activePage, setActivePage] = useState<Page>("home");
+  const [activePage, setActivePage] = useState<Page>(() => getRouteFromUrl().page);
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -46,6 +60,48 @@ function AppContent() {
     reloadProducts();
   }, []);
 
+  useEffect(() => {
+    const syncRoute = () => {
+      const route = getRouteFromUrl();
+      setActivePage(route.page);
+
+      if (route.productId === null) {
+        setSelectedProduct(null);
+        return;
+      }
+
+      const product = products.find((item) => item.id === route.productId);
+      if (product) {
+        setSelectedProduct(product);
+      } else if (!loadingProducts && !loadError) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("producto");
+        window.history.replaceState({}, "", url);
+        setActivePage("home");
+      }
+    };
+
+    syncRoute();
+    window.addEventListener("popstate", syncRoute);
+    return () => window.removeEventListener("popstate", syncRoute);
+  }, [products, loadingProducts, loadError]);
+
+  const navigateTo = (page: Page, productId?: number) => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("producto");
+    url.searchParams.delete("pagina");
+
+    if (page === "product" && productId !== undefined) {
+      url.searchParams.set("producto", String(productId));
+    } else if (page !== "home") {
+      url.searchParams.set("pagina", page);
+    }
+
+    window.history.pushState({}, "", url);
+    setActivePage(page);
+    if (page !== "product") setSelectedProduct(null);
+  };
+
   // Secret admin access: type /admin anywhere on the page
   const bufferRef = useRef("");
   useEffect(() => {
@@ -57,7 +113,7 @@ function AppContent() {
       bufferRef.current = (bufferRef.current + e.key).slice(-SECRET.length);
       if (bufferRef.current === SECRET) {
         bufferRef.current = "";
-        setActivePage("admin");
+        navigateTo("admin");
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     };
@@ -82,14 +138,14 @@ function AppContent() {
 
   const handleSelectProduct = (product: Product) => {
     setSelectedProduct(product);
-    setActivePage("product");
+    navigateTo("product", product.id);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCategorySelect = (category: string) => {
     setActiveCategory(category);
     setSearchQuery("");
-    setActivePage("home");
+    navigateTo("home");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -97,7 +153,7 @@ function AppContent() {
     setSearchQuery(query);
     if (query.trim()) {
       setActiveCategory("Todos");
-      setActivePage("home");
+      if (activePage !== "home") navigateTo("home");
     }
   };
 
@@ -139,7 +195,7 @@ function AppContent() {
               return (
                 <button
                   key={page}
-                  onClick={() => setActivePage(page)}
+                  onClick={() => navigateTo(page)}
                   className={`font-label-md text-label-md transition-colors pb-0.5 ${
                     activePage === page
                       ? "text-primary border-b-2 border-primary"
@@ -166,7 +222,7 @@ function AppContent() {
           </button>
           {/* Bolso — única entrada a Mi Lista en desktop, con badge de cantidad */}
           <button
-            onClick={() => setActivePage("wishlist")}
+            onClick={() => navigateTo("wishlist")}
             className="relative text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform"
             aria-label="Mi Lista"
           >
@@ -216,7 +272,7 @@ function AppContent() {
               ] as [Page, string, string][]).map(([page, icon, label]) => (
                 <button
                   key={page}
-                  onClick={() => { setActivePage(page); setIsDrawerOpen(false); }}
+                  onClick={() => { navigateTo(page); setIsDrawerOpen(false); }}
                   className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-label-md text-label-md transition-all active:scale-95 ${
                     activePage === page
                       ? "bg-primary text-on-primary"
@@ -235,7 +291,7 @@ function AppContent() {
             {/* Acceso admin — parte inferior */}
             <div className="px-4 pb-8 pt-4 border-t border-outline-variant/20">
               <button
-                onClick={() => { setActivePage("admin"); setIsDrawerOpen(false); window.scrollTo({ top: 0 }); }}
+                onClick={() => { navigateTo("admin"); setIsDrawerOpen(false); window.scrollTo({ top: 0 }); }}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container active:scale-95 transition-all"
               >
                 <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
@@ -304,18 +360,24 @@ function AppContent() {
       )}
 
       {/* ========== MAIN CONTENT ========== */}
-      {activePage === "product" && selectedProduct ? (
-        <ProductDetailPage
-          product={selectedProduct}
-          relatedProducts={products.filter((p) => p.id !== selectedProduct.id).slice(0, 5)}
-          onBack={() => setActivePage("home")}
-          onSelectProduct={handleSelectProduct}
-        />
+      {activePage === "product" ? (
+        selectedProduct ? (
+          <ProductDetailPage
+            product={selectedProduct}
+            relatedProducts={products.filter((p) => p.id !== selectedProduct.id).slice(0, 5)}
+            onBack={() => navigateTo("home")}
+            onSelectProduct={handleSelectProduct}
+          />
+        ) : (
+          <main className="min-h-screen pt-24 text-center text-on-surface-variant">
+            {loadingProducts ? "Cargando artículo..." : loadError ?? "Artículo no encontrado."}
+          </main>
+        )
       ) : activePage === "admin" ? (
         <AdminPage
           products={products}
           onUpdateProducts={handleUpdateProducts}
-          onGoToStore={() => setActivePage("home")}
+          onGoToStore={() => navigateTo("home")}
         />
       ) : activePage === "categories" ? (
         <CategoriesPage onCategorySelect={handleCategorySelect} />
@@ -431,7 +493,7 @@ function AppContent() {
 
       {activePage !== "product" && activePage !== "admin" && <WhatsAppButton />}
       {activePage !== "product" && activePage !== "admin" && (
-        <BottomNav activePage={activePage} onNavigate={setActivePage} />
+        <BottomNav activePage={activePage} onNavigate={navigateTo} />
       )}
 
       {/* ========== DESKTOP FOOTER ========== */}
@@ -456,7 +518,7 @@ function AppContent() {
                   {([["home","Inicio"],["categories","Categorías"],["wishlist","Mi Lista"]] as [Page,string][]).map(([page, label]) => (
                     <li key={page}>
                       <button
-                        onClick={() => setActivePage(page)}
+                        onClick={() => navigateTo(page)}
                         className="font-body-md text-sm text-on-surface-variant hover:text-primary transition-colors"
                       >
                         {label}
@@ -524,7 +586,7 @@ function AppContent() {
                   © 2025 GlowSkin · Tienda digital · Todos los derechos reservados.
                 </p>
                 <button
-                  onClick={() => setActivePage("admin")}
+                  onClick={() => navigateTo("admin")}
                   className="text-[10px] text-outline hover:text-on-surface-variant transition-colors"
                   aria-label="Panel de administración"
                 >

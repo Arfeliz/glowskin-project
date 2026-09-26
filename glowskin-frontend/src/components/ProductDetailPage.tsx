@@ -57,12 +57,42 @@ export default function ProductDetailPage({
 }: ProductDetailPageProps) {
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
+  const [shareMessage, setShareMessage] = useState("");
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) {
       addItem({ id: product.id, name: product.name, price: product.price, image: product.image });
     }
     setQuantity(1);
+  };
+
+  const handleShare = async () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("pagina");
+    url.searchParams.set("producto", String(product.id));
+    const shareUrl = url.toString();
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: product.name, text: `Mira ${product.name} en GlowSkin`, url: shareUrl });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setShareMessage("Enlace copiado");
+        window.setTimeout(() => setShareMessage(""), 2500);
+        return;
+      } catch {
+        // Usa el cuadro del navegador si el portapapeles no está disponible.
+      }
+    }
+
+    window.prompt("Copia el enlace del artículo:", shareUrl);
   };
 
   return (
@@ -77,11 +107,18 @@ export default function ProductDetailPage({
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
         <button
+          onClick={() => void handleShare()}
           className="absolute top-4 right-4 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-surface/80 backdrop-blur-md text-on-surface active:scale-95 transition-transform"
           aria-label="Compartir"
+          title="Compartir artículo"
         >
           <span className="material-symbols-outlined">share</span>
         </button>
+        {shareMessage && (
+          <div role="status" className="absolute top-16 right-4 z-20 rounded-lg bg-surface-container-lowest px-3 py-2 text-sm text-on-surface shadow-lg">
+            {shareMessage}
+          </div>
+        )}
         <img
           className="w-full h-full object-cover"
           src={product.image}
