@@ -52,6 +52,8 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
   );
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [productSaveError, setProductSaveError] = useState("");
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
 
   // Sync adminProducts when parent reloads from API (render-time update, no effect needed)
   const [prevProducts, setPrevProducts] = useState(products);
@@ -60,7 +62,13 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
     setAdminProducts(products.map((p, i) => ({ ...p, stock: p.stock ?? STOCK_DEFAULTS[i] ?? 10 })));
   }
 
-  const { waPhone: configWaPhone, setWaPhone: setConfigPhone } = useConfig();
+  const {
+    waPhone: configWaPhone,
+    setWaPhone: setConfigPhone,
+    instagramUrl: configInstagramUrl,
+    tiktokUrl: configTiktokUrl,
+    setSocialLinks,
+  } = useConfig();
 
   // Config
   const [waPhone, setWaPhone] = useState("");
@@ -70,9 +78,18 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
     setWaPhone(configWaPhone);
   }
   const [waSaved, setWaSaved] = useState(false);
-  const [igLink, setIgLink] = useState("https://www.instagram.com/gloowskin1/");
-  const [ttLink, setTtLink] = useState("https://www.tiktok.com/@gloowskin2");
+  const [igLink, setIgLink] = useState(configInstagramUrl);
+  const [ttLink, setTtLink] = useState(configTiktokUrl);
+  const [prevConfigSocial, setPrevConfigSocial] = useState({ instagramUrl: configInstagramUrl, tiktokUrl: configTiktokUrl });
+  if (prevConfigSocial.instagramUrl !== configInstagramUrl || prevConfigSocial.tiktokUrl !== configTiktokUrl) {
+    setPrevConfigSocial({ instagramUrl: configInstagramUrl, tiktokUrl: configTiktokUrl });
+    setIgLink(configInstagramUrl);
+    setTtLink(configTiktokUrl);
+  }
   const [socialSaved, setSocialSaved] = useState(false);
+  const [configError, setConfigError] = useState("");
+  const [waSaving, setWaSaving] = useState(false);
+  const [socialSaving, setSocialSaving] = useState(false);
 
   // Auth
   const handleLogin = () => {
@@ -91,12 +108,15 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
   // Inventory
   const [fullEditProduct, setFullEditProduct] = useState<AdminProduct | null>(null);
 
-  const openEdit = (p: AdminProduct) => { setFullEditProduct(p); setIsNewProduct(false); };
+  const openEdit = (p: AdminProduct) => { setProductSaveError(""); setFullEditProduct(p); setIsNewProduct(false); };
   const openAdd = () => {
+    setProductSaveError("");
     setFullEditProduct({ id: 0, name: "", price: 0, category: CATEGORIES[0], image: "", alt: "", stock: 0 });
     setIsNewProduct(true);
   };
   const handleSaveProduct = (p: AdminProduct) => {
+    setProductSaveError("");
+    setIsSavingProduct(true);
     const apiCall = isNewProduct
       ? apiCreateProduct({ name: p.name, price: p.price, image: p.image, images: p.images, alt: p.alt, category: p.category, stock: p.stock, description: p.description, benefitPoints: p.benefitPoints, ingredients: p.ingredients, usageSteps: p.usageSteps }, token)
       : apiUpdateProduct(p.id, p, token);
@@ -110,8 +130,15 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
         setFullEditProduct(null);
         setActiveTab("inventory");
       })
-      .catch(() => { /* error silenciado */ })
-      .finally(() => {});
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : "No se pudo guardar el producto";
+        setProductSaveError(
+          /images/i.test(message) && /(column|schema cache|does not exist)/i.test(message)
+            ? "Falta aplicar la migración glowskin-backend/supabase/migration_product_images.sql en Supabase para guardar productos con galería."
+            : message
+        );
+      })
+      .finally(() => setIsSavingProduct(false));
   };
   const handleDelete = (id: number) => {
     if (deletingId === id) {
@@ -487,18 +514,23 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
                 onClick={() => {
                   const clean = waPhone.replace(/\D/g, "");
                   setWaPhone(clean);
+                  setConfigError("");
+                  setWaSaving(true);
                   updateConfig({ wa_phone: clean }, token)
                     .then(() => {
                       setConfigPhone(clean);
                       setWaSaved(true);
                       setTimeout(() => setWaSaved(false), 2000);
                     })
-                    .catch(() => {});
+                    .catch((error: unknown) => setConfigError(error instanceof Error ? error.message : "No se pudo guardar el número"))
+                    .finally(() => setWaSaving(false));
                 }}
+                  disabled={waSaving}
                 className="w-full bg-primary text-on-primary py-3 rounded-full font-label-md text-label-md shadow-lg active:scale-[0.98] transition-all"
               >
-                {waSaved ? "¡Guardado!" : "Guardar Número"}
+                {waSaving ? "Guardando..." : waSaved ? "¡Guardado!" : "Guardar Número"}
               </button>
+              {configError && <p role="alert" className="text-sm text-error">{configError}</p>}
             </section>
 
             {/* Social links */}
@@ -528,11 +560,24 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
                 </div>
               </div>
               <button
-                onClick={() => { setSocialSaved(true); setTimeout(() => setSocialSaved(false), 2000); }}
+                onClick={() => {
+                  setConfigError("");
+                  setSocialSaving(true);
+                  updateConfig({ instagram_url: igLink.trim(), tiktok_url: ttLink.trim() }, token)
+                    .then((savedConfig) => {
+                      setSocialLinks(savedConfig.instagram_url || igLink.trim(), savedConfig.tiktok_url || ttLink.trim());
+                      setSocialSaved(true);
+                      setTimeout(() => setSocialSaved(false), 2000);
+                    })
+                    .catch((error: unknown) => setConfigError(error instanceof Error ? error.message : "No se pudieron guardar los enlaces"))
+                    .finally(() => setSocialSaving(false));
+                }}
+                disabled={socialSaving}
                 className="w-full border border-primary text-primary py-3 rounded-full font-label-md text-label-md hover:bg-primary/5 active:scale-[0.98] transition-all"
               >
-                {socialSaved ? "¡Guardado!" : "Guardar enlaces"}
+                {socialSaving ? "Guardando..." : socialSaved ? "¡Guardado!" : "Guardar enlaces"}
               </button>
+              {configError && <p role="alert" className="text-sm text-error">{configError}</p>}
             </section>
 
             {/* Session */}
@@ -561,7 +606,10 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
         <div className="fixed inset-0 z-[60] bg-background overflow-y-auto">
           <AdminProductEditPage
             product={fullEditProduct}
+            isNewProduct={isNewProduct}
             token={token}
+            isSaving={isSavingProduct}
+            saveError={productSaveError}
             onSave={handleSaveProduct}
             onClose={() => setFullEditProduct(null)}
           />

@@ -16,7 +16,10 @@ export interface AdminProduct extends Product {
 
 interface AdminProductEditPageProps {
   product: AdminProduct;
+  isNewProduct: boolean;
   token: string;
+  isSaving: boolean;
+  saveError: string;
   onSave: (p: AdminProduct) => void;
   onClose: () => void;
 }
@@ -57,25 +60,28 @@ function TextInput({
 
 export default function AdminProductEditPage({
   product,
+  isNewProduct,
   token,
+  isSaving,
+  saveError,
   onSave,
   onClose,
 }: AdminProductEditPageProps) {
   const [form, setForm] = useState<AdminProduct>({
-    ingredients: [
+    ingredients: isNewProduct ? [] : product.ingredients ?? [
       { name: "Vitamina C Estabilizada", desc: "Aclara y unifica el tono de la piel sin irritación." },
       { name: "Extracto de Rosa Mosqueta", desc: "Regeneración celular natural y ácidos grasos esenciales." },
     ],
-    usageSteps: [
+    usageSteps: isNewProduct ? [] : product.usageSteps ?? [
       "Limpia tu rostro con el Cleanser Botanical.",
       "Aplica 3–4 gotas del producto sobre la piel ligeramente húmeda.",
       "Realiza masajes ascendentes hasta su total absorción.",
     ],
     ...product,
     image: product.images?.[0] ?? product.image,
-    images: product.images?.length ? product.images : product.image ? [product.image] : [],
-    description: product.description ?? DEFAULT_PRODUCT_DESCRIPTION,
-    benefitPoints: product.benefitPoints ?? [...DEFAULT_PRODUCT_BENEFIT_POINTS],
+    images: isNewProduct ? [] : product.images?.length ? product.images : product.image ? [product.image] : [],
+    description: isNewProduct ? "" : product.description ?? DEFAULT_PRODUCT_DESCRIPTION,
+    benefitPoints: isNewProduct ? [] : product.benefitPoints ?? [...DEFAULT_PRODUCT_BENEFIT_POINTS],
   });
   const [images, setImages] = useState<ProductImage[]>([]);
   const [imageBusy, setImageBusy] = useState(false);
@@ -203,14 +209,15 @@ export default function AdminProductEditPage({
         </h1>
         <button
           onClick={() => valid && onSave(form)}
-          disabled={!valid}
+          disabled={!valid || isSaving}
           className="bg-primary text-on-primary px-4 py-2 rounded-full font-label-md text-label-md active:scale-95 transition-all disabled:opacity-40 shadow-md"
         >
-          Guardar
+          {isSaving ? "Guardando..." : "Guardar"}
         </button>
       </header>
 
       <div className="max-w-lg mx-auto px-margin-mobile space-y-8 pt-6">
+        {saveError && <p role="alert" className="rounded-lg border border-error/30 bg-error-container/30 px-4 py-3 text-sm text-error">{saveError}</p>}
 
         {/* ── Hero preview ── */}
         {form.image && (
@@ -463,10 +470,10 @@ export default function AdminProductEditPage({
         </button>
         <button
           onClick={() => valid && onSave(form)}
-          disabled={!valid}
+          disabled={!valid || isSaving}
           className="flex-1 py-3 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:scale-95 transition-all disabled:opacity-40"
         >
-          Guardar cambios
+          {isSaving ? "Guardando..." : "Guardar cambios"}
         </button>
       </div>
     </div>

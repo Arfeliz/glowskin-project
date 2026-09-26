@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { CartProvider } from "./context/CartContext";
 import { ConfigProvider } from "./context/ConfigContext";
 import { useCart } from "./context/CartContext";
+import { useConfig } from "./context/ConfigContext";
 import HeroBanner from "./components/HeroBanner";
 import Filters from "./components/Filters";
 import ProductCard from "./components/ProductCard";
@@ -32,6 +33,7 @@ function getRouteFromUrl(): { page: Page; productId: number | null } {
 
 function AppContent() {
   const { items } = useCart();
+  const { instagramUrl, tiktokUrl } = useConfig();
   const [activePage, setActivePage] = useState<Page>(() => getRouteFromUrl().page);
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [products, setProducts] = useState<Product[]>([]);
@@ -551,7 +553,7 @@ function AppContent() {
                   {/* Instagram */}
                   <li>
                     <a
-                      href="https://www.instagram.com/gloowskin1/"
+                      href={instagramUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors"
@@ -565,7 +567,7 @@ function AppContent() {
                   {/* TikTok */}
                   <li>
                     <a
-                      href="https://www.tiktok.com/@gloowskin2"
+                      href={tiktokUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors"
@@ -608,7 +610,7 @@ function AppContent() {
                   </svg>
                 </a>
                 <a
-                  href="https://www.instagram.com/gloowskin1/"
+                  href={instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container hover:bg-secondary-container text-on-surface-variant hover:text-primary transition-all"
@@ -619,7 +621,7 @@ function AppContent() {
                   </svg>
                 </a>
                 <a
-                  href="https://www.tiktok.com/@gloowskin2"
+                  href={tiktokUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container hover:bg-secondary-container text-on-surface-variant hover:text-primary transition-all"

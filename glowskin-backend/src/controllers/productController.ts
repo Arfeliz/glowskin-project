@@ -116,10 +116,10 @@ export async function getProductById(req: Request, res: Response): Promise<void>
 }
 
 export async function createProduct(req: Request, res: Response): Promise<void> {
-  const { name, price, image, alt, category, stock } = req.body as Partial<ApiProduct>;
+  const { name, price, category, stock } = req.body as Partial<ApiProduct>;
 
-  if (!name || !price || !image || !alt || !category) {
-    res.status(400).json({ error: "Campos requeridos: name, price, image, alt, category" });
+  if (!name?.trim() || typeof price !== "number" || !Number.isFinite(price) || price <= 0 || !category?.trim()) {
+    res.status(400).json({ error: "Nombre, precio válido y categoría son obligatorios" });
     return;
   }
 
@@ -155,8 +155,12 @@ export async function updateProduct(req: Request, res: Response): Promise<void> 
     .select()
     .single();
 
-  if (error || !data) {
-    res.status(404).json({ error: "Producto no encontrado o error al actualizar" });
+  if (error) {
+    res.status(500).json({ error: error.message });
+    return;
+  }
+  if (!data) {
+    res.status(404).json({ error: "Producto no encontrado" });
     return;
   }
 
