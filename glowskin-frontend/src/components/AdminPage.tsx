@@ -561,6 +561,7 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
         <div className="fixed inset-0 z-[60] bg-background overflow-y-auto">
           <AdminProductEditPage
             product={fullEditProduct}
+            token={token}
             onSave={handleSaveProduct}
             onClose={() => setFullEditProduct(null)}
           />

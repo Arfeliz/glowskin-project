@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import productRoutes from "./routes/productRoutes";
 import authRoutes from "./routes/authRoutes";
 import configRoutes from "./routes/configRoutes";
+import imageRoutes from "./routes/imageRoutes";
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use(express.json());
 app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/config", configRoutes);
+app.use("/api/images", imageRoutes);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get("/api/health", (_req, res) => {

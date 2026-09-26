@@ -1,5 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Product } from "../services/products";
+import {
+  deleteProductImage,
+  getProductImages,
+  uploadProductImage,
+  type ProductImage,
+} from "../services/productImages";
 import { DEFAULT_PRODUCT_BENEFIT_POINTS, DEFAULT_PRODUCT_DESCRIPTION } from "./productContent";
 
 const CATEGORIES = ["Skincare", "Cuidado Corporal", "Aromas y Velas", "Suplementos", "Cuidado Masculino"];
@@ -10,6 +16,7 @@ export interface AdminProduct extends Product {
 
 interface AdminProductEditPageProps {
   product: AdminProduct;
+  token: string;
   onSave: (p: AdminProduct) => void;
   onClose: () => void;
 }
@@ -50,6 +57,7 @@ function TextInput({
 
 export default function AdminProductEditPage({
   product,
+  token,
   onSave,
   onClose,
 }: AdminProductEditPageProps) {
@@ -67,9 +75,60 @@ export default function AdminProductEditPage({
     description: product.description ?? DEFAULT_PRODUCT_DESCRIPTION,
     benefitPoints: product.benefitPoints ?? [...DEFAULT_PRODUCT_BENEFIT_POINTS],
   });
+  const [images, setImages] = useState<ProductImage[]>([]);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const [imageStatus, setImageStatus] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    getProductImages(token)
+      .then((data) => { if (active) setImages(data); })
+      .catch((error: unknown) => {
+        if (active) setImageError(error instanceof Error ? error.message : "No se pudo cargar la biblioteca");
+      });
+    return () => { active = false; };
+  }, [token]);
 
   const set = <K extends keyof AdminProduct>(key: K, value: AdminProduct[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  const handleImageUpload = async (file: File) => {
+    setImageError("");
+    setImageStatus("");
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError("La imagen no puede superar los 5 MB");
+      return;
+    }
+
+    setImageBusy(true);
+    try {
+      const uploaded = await uploadProductImage(file, token);
+      setImages((current) => [uploaded, ...current.filter((image) => image.path !== uploaded.path)]);
+      set("image", uploaded.url);
+      setImageStatus("Imagen subida y seleccionada. Guarda el producto para aplicar el cambio.");
+    } catch (error) {
+      setImageError(error instanceof Error ? error.message : "No se pudo subir la imagen");
+    } finally {
+      setImageBusy(false);
+    }
+  };
+
+  const handleImageDelete = async (image: ProductImage) => {
+    setImageError("");
+    setImageStatus("");
+    setImageBusy(true);
+    try {
+      await deleteProductImage(image.path, token);
+      setImages((current) => current.filter((item) => item.path !== image.path));
+      if (form.image === image.url) set("image", "");
+      setImageStatus("Imagen eliminada de la biblioteca.");
+    } catch (error) {
+      setImageError(error instanceof Error ? error.message : "No se pudo borrar la imagen");
+    } finally {
+      setImageBusy(false);
+    }
+  };
 
   // Benefit points
   const setBenefitPoint = (i: number, v: string) => {
@@ -184,9 +243,56 @@ export default function AdminProductEditPage({
             </select>
           </div>
 
-          <div className="space-y-1">
-            <FieldLabel>URL de imagen</FieldLabel>
-            <TextInput value={form.image} onChange={(v) => set("image", v)} placeholder="https://..." />
+          <div className="space-y-3">
+            <FieldLabel>Biblioteca de imágenes</FieldLabel>
+            <label className={`inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition-opacity ${imageBusy ? "opacity-50" : "hover:opacity-90"}`}>
+              <span className="material-symbols-outlined text-[18px]">upload</span>
+              {imageBusy ? "Procesando..." : "Subir imagen"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="sr-only"
+                disabled={imageBusy}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void handleImageUpload(file);
+                  event.target.value = "";
+                }}
+              />
+            </label>
+            <p className="text-xs text-on-surface-variant">JPG, PNG, WebP o GIF. Máximo 5 MB.</p>
+            {imageError && <p role="alert" className="text-sm text-error">{imageError}</p>}
+            {imageStatus && <p role="status" className="text-sm text-primary">{imageStatus}</p>}
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+              {images.map((image) => (
+                <div key={image.path} className={`relative overflow-hidden rounded-lg border ${form.image === image.url ? "border-primary ring-2 ring-primary/30" : "border-outline-variant/40"}`}>
+                  <button
+                    type="button"
+                    onClick={() => { set("image", image.url); setImageError(""); setImageStatus("Imagen seleccionada. Guarda el producto para aplicar el cambio."); }}
+                    className="block aspect-square w-full bg-surface-container"
+                    aria-label="Seleccionar imagen"
+                    title="Seleccionar imagen"
+                  >
+                    <img src={image.url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleImageDelete(image)}
+                    disabled={imageBusy}
+                    className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-error shadow disabled:opacity-50"
+                    aria-label="Eliminar imagen de la biblioteca"
+                    title="Eliminar imagen"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+            {images.length === 0 && <p className="text-sm text-on-surface-variant">Aún no hay imágenes en la biblioteca.</p>}
+            <div className="space-y-1">
+              <FieldLabel>URL externa (opcional)</FieldLabel>
+              <TextInput value={form.image} onChange={(v) => set("image", v)} placeholder="https://..." />
+            </div>
           </div>
 
           <div className="space-y-1">
