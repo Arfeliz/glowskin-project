@@ -157,6 +157,8 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
   ];
 
   const lowStock = adminProducts.filter((p) => p.stock <= 3);
+  const totalStock = adminProducts.reduce((sum, product) => sum + (product.stock ?? 0), 0);
+  const activeCategories = CATEGORIES.filter((category) => adminProducts.some((product) => product.category === category)).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -231,21 +233,26 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
       )}
 
       {/* ── Header ── */}
-      <header className="fixed top-0 w-full z-50 bg-surface/95 backdrop-blur-md flex justify-between items-center px-margin-mobile h-14 sm:h-16 border-b border-outline-variant/30">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-            admin_panel_settings
-          </span>
-          <h1 className="font-headline-md text-headline-sm text-primary tracking-tight select-none">ADMIN</h1>
+      <header className="fixed top-0 w-full z-50 bg-surface/95 backdrop-blur-md flex justify-between items-center px-margin-mobile h-14 sm:h-16 border-b border-outline-variant/30 shadow-[0_1px_0_rgba(18,18,18,0.04)]">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+              admin_panel_settings
+            </span>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">GlowSkin</div>
+            <h1 className="font-headline-md text-headline-sm text-primary tracking-tight select-none">Admin</h1>
+          </div>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={onGoToStore} className="flex items-center gap-1 text-on-surface-variant hover:text-primary active:scale-90 transition-all">
-            <span className="material-symbols-outlined text-[20px]">storefront</span>
+          <button onClick={onGoToStore} className="flex items-center gap-1 rounded-full border border-outline-variant/40 px-3 py-1.5 text-on-surface-variant hover:text-primary hover:border-primary/40 active:scale-90 transition-all">
+            <span className="material-symbols-outlined text-[18px]">storefront</span>
             <span className="text-label-sm font-label-sm hidden sm:inline">Tienda</span>
           </button>
           {isLoggedIn && (
-            <button onClick={handleLogout} className="flex items-center gap-1 text-on-surface-variant hover:text-error active:scale-90 transition-all">
-              <span className="material-symbols-outlined text-[20px]">logout</span>
+            <button onClick={handleLogout} className="flex items-center gap-1 rounded-full border border-error/20 px-3 py-1.5 text-on-surface-variant hover:text-error hover:border-error/30 active:scale-90 transition-all">
+              <span className="material-symbols-outlined text-[18px]">logout</span>
               <span className="text-label-sm font-label-sm hidden sm:inline">Salir</span>
             </button>
           )}
@@ -287,34 +294,34 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
         {/* ═══ OVERVIEW ═══ */}
         {(!isLoggedIn || activeTab === "overview") && (
           <div className="space-y-stack-lg">
-            <section>
-              <h2 className="font-headline-sm text-headline-sm text-on-surface">Panel de Control</h2>
-              <p className="font-body-md text-on-surface-variant">Bienvenido de nuevo, Admin.</p>
+            <section className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-[0_8px_24px_rgba(19,17,16,0.04)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-on-surface-variant">Dashboard</p>
+                  <h2 className="mt-1 font-headline-sm text-headline-sm text-on-surface">Gestión de tienda</h2>
+                </div>
+                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Online</span>
+              </div>
+              <p className="mt-3 font-body-md text-on-surface-variant">Control del catálogo, stock y contacto de la marca.</p>
             </section>
 
             {/* Stats */}
             <section className="grid grid-cols-2 gap-4">
-              <div
-                className="col-span-2 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30"
-                style={{ boxShadow: "0px 10px 30px rgba(220, 174, 150, 0.15)" }}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-label-sm font-label-sm text-on-surface-variant">Ventas Totales (Mes)</span>
-                  <span className="material-symbols-outlined text-primary text-[20px]">payments</span>
-                </div>
-                <div className="text-headline-md font-headline-md text-primary">$12,480.50</div>
-                <div className="flex items-center gap-1 mt-1">
-                  <span className="material-symbols-outlined text-green-600 text-sm">trending_up</span>
-                  <span className="text-xs text-green-600 font-medium">+12% vs anterior</span>
-                </div>
-              </div>
-              <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20">
-                <div className="text-label-sm font-label-sm text-on-surface-variant mb-1">Pedidos</div>
-                <div className="text-headline-sm font-headline-sm text-primary">142</div>
-              </div>
-              <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20">
+              <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 shadow-[0_8px_22px_rgba(19,17,16,0.03)]">
                 <div className="text-label-sm font-label-sm text-on-surface-variant mb-1">Productos</div>
                 <div className="text-headline-sm font-headline-sm text-primary">{adminProducts.length}</div>
+              </div>
+              <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 shadow-[0_8px_22px_rgba(19,17,16,0.03)]">
+                <div className="text-label-sm font-label-sm text-on-surface-variant mb-1">Stock total</div>
+                <div className="text-headline-sm font-headline-sm text-primary">{totalStock}</div>
+              </div>
+              <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 shadow-[0_8px_22px_rgba(19,17,16,0.03)]">
+                <div className="text-label-sm font-label-sm text-on-surface-variant mb-1">Categorías</div>
+                <div className="text-headline-sm font-headline-sm text-primary">{activeCategories}</div>
+              </div>
+              <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 shadow-[0_8px_22px_rgba(19,17,16,0.03)]">
+                <div className="text-label-sm font-label-sm text-on-surface-variant mb-1">Stock crítico</div>
+                <div className="text-headline-sm font-headline-sm text-primary">{lowStock.length}</div>
               </div>
             </section>
 
@@ -339,39 +346,32 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
               </section>
             )}
 
-            {/* Popular products */}
+            {/* Quick actions */}
             <section className="space-y-stack-sm">
               <div className="flex justify-between items-center">
-                <h3 className="font-label-md text-label-md text-on-surface uppercase tracking-widest">Productos Populares</h3>
-                <button onClick={() => setActiveTab("inventory")} className="text-label-sm font-label-sm text-primary underline">
-                  Ver todos
-                </button>
+                <h3 className="font-label-md text-label-md text-on-surface uppercase tracking-widest">Acciones rápidas</h3>
               </div>
-              <div className="flex overflow-x-auto hide-scrollbar gap-4 -mx-margin-mobile px-margin-mobile pb-2">
-                {adminProducts.slice(0, 6).map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => { openEdit(p); setActiveTab("inventory"); }}
-                    className="flex-shrink-0 w-28 space-y-2 cursor-pointer group"
-                  >
-                    <div className="aspect-square bg-secondary-container rounded-lg overflow-hidden relative">
-                      {p.image ? (
-                        <img className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src={p.image} alt={p.alt} loading="lazy" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="material-symbols-outlined text-on-surface-variant text-[28px]">image</span>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <span className="material-symbols-outlined text-white text-[20px]">edit</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold truncate">{p.name}</div>
-                      <div className="text-[10px] text-primary font-semibold">${p.price.toFixed(2)}</div>
-                    </div>
+              <div className="grid grid-cols-1 gap-3">
+                <button
+                  onClick={() => setActiveTab("inventory")}
+                  className="flex items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-4 text-left shadow-[0_8px_16px_rgba(19,17,16,0.02)] hover:border-primary/40 hover:bg-surface-container transition-colors"
+                >
+                  <div>
+                    <div className="font-semibold text-on-surface">Gestionar catálogo</div>
+                    <div className="text-xs text-on-surface-variant">Agregar, editar o borrar productos</div>
                   </div>
-                ))}
+                  <span className="material-symbols-outlined text-primary">arrow_forward</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("config")}
+                  className="flex items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-4 text-left shadow-[0_8px_16px_rgba(19,17,16,0.02)] hover:border-primary/40 hover:bg-surface-container transition-colors"
+                >
+                  <div>
+                    <div className="font-semibold text-on-surface">Configurar contacto</div>
+                    <div className="text-xs text-on-surface-variant">WhatsApp y redes sociales</div>
+                  </div>
+                  <span className="material-symbols-outlined text-primary">arrow_forward</span>
+                </button>
               </div>
             </section>
           </div>
