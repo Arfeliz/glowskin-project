@@ -183,6 +183,7 @@ export default function AdminProductEditPage({
 
   const valid = form.name.trim().length > 0 && form.price > 0;
   const selectedImages = form.images?.length ? form.images : form.image ? [form.image] : [];
+  const productLibraryImages = images.filter((image) => selectedImages.includes(image.url));
 
   const toggleSelectedImage = (url: string) => {
     setForm((current) => {
@@ -298,7 +299,7 @@ export default function AdminProductEditPage({
             {imageError && <p role="alert" className="text-sm text-error">{imageError}</p>}
             {imageStatus && <p role="status" className="text-sm text-primary">{imageStatus}</p>}
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-              {images.map((image) => (
+              {productLibraryImages.map((image) => (
                 <div key={image.path} className={`relative overflow-hidden rounded-lg border ${selectedImages.includes(image.url) ? "border-primary ring-2 ring-primary/30" : "border-outline-variant/40"}`}>
                   <button
                     type="button"
@@ -327,7 +328,7 @@ export default function AdminProductEditPage({
                 </div>
               ))}
             </div>
-            {images.length === 0 && <p className="text-sm text-on-surface-variant">Aún no hay imágenes en la biblioteca.</p>}
+            {productLibraryImages.length === 0 && <p className="text-sm text-on-surface-variant">Este producto aún no tiene imágenes asociadas.</p>}
             <div className="space-y-1">
               <FieldLabel>URL externa (opcional)</FieldLabel>
               <TextInput

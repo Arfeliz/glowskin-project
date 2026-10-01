@@ -68,6 +68,12 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
     instagramUrl: configInstagramUrl,
     tiktokUrl: configTiktokUrl,
     setSocialLinks,
+    promoBadge: configPromoBadge,
+    promoTitle: configPromoTitle,
+    promoSubtitle: configPromoSubtitle,
+    bannerImageUrl: configBannerImageUrl,
+    promoCta: configPromoCta,
+    setMarketingConfig,
   } = useConfig();
 
   // Config
@@ -87,9 +93,44 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
     setTtLink(configTiktokUrl);
   }
   const [socialSaved, setSocialSaved] = useState(false);
+  const [promoBadge, setPromoBadge] = useState(configPromoBadge);
+  const [promoTitle, setPromoTitle] = useState(configPromoTitle);
+  const [promoSubtitle, setPromoSubtitle] = useState(configPromoSubtitle);
+  const [bannerImageUrl, setBannerImageUrl] = useState(configBannerImageUrl);
+  const [promoCta, setPromoCta] = useState(configPromoCta);
+  const [prevMarketing, setPrevMarketing] = useState({
+    promoBadge: configPromoBadge,
+    promoTitle: configPromoTitle,
+    promoSubtitle: configPromoSubtitle,
+    bannerImageUrl: configBannerImageUrl,
+    promoCta: configPromoCta,
+  });
+  const [marketingSaved, setMarketingSaved] = useState(false);
   const [configError, setConfigError] = useState("");
   const [waSaving, setWaSaving] = useState(false);
   const [socialSaving, setSocialSaving] = useState(false);
+  const [marketingSaving, setMarketingSaving] = useState(false);
+
+  if (
+    prevMarketing.promoBadge !== configPromoBadge ||
+    prevMarketing.promoTitle !== configPromoTitle ||
+    prevMarketing.promoSubtitle !== configPromoSubtitle ||
+    prevMarketing.bannerImageUrl !== configBannerImageUrl ||
+    prevMarketing.promoCta !== configPromoCta
+  ) {
+    setPrevMarketing({
+      promoBadge: configPromoBadge,
+      promoTitle: configPromoTitle,
+      promoSubtitle: configPromoSubtitle,
+      bannerImageUrl: configBannerImageUrl,
+      promoCta: configPromoCta,
+    });
+    setPromoBadge(configPromoBadge);
+    setPromoTitle(configPromoTitle);
+    setPromoSubtitle(configPromoSubtitle);
+    setBannerImageUrl(configBannerImageUrl);
+    setPromoCta(configPromoCta);
+  }
 
   // Auth
   const handleLogin = () => {
@@ -578,6 +619,100 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
                 className="w-full border border-primary text-primary py-3 rounded-full font-label-md text-label-md hover:bg-primary/5 active:scale-[0.98] transition-all"
               >
                 {socialSaving ? "Guardando..." : socialSaved ? "¡Guardado!" : "Guardar enlaces"}
+              </button>
+              {configError && <p role="alert" className="text-sm text-error">{configError}</p>}
+            </section>
+
+            {/* Marketing / Offers */}
+            <section className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/20 space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-primary">campaign</span>
+                <h3 className="font-label-md text-label-md text-on-surface uppercase tracking-widest">Ofertas y banner</h3>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <FieldLabel>Badge / oferta</FieldLabel>
+                  <input
+                    type="text"
+                    value={promoBadge}
+                    onChange={(e) => setPromoBadge(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary text-sm bg-white outline-none transition-colors"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <FieldLabel>Título del banner</FieldLabel>
+                  <input
+                    type="text"
+                    value={promoTitle}
+                    onChange={(e) => setPromoTitle(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary text-sm bg-white outline-none transition-colors"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <FieldLabel>Texto secundario</FieldLabel>
+                  <textarea
+                    value={promoSubtitle}
+                    onChange={(e) => setPromoSubtitle(e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary text-sm bg-white outline-none transition-colors resize-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <FieldLabel>URL de imagen del banner</FieldLabel>
+                  <input
+                    type="url"
+                    value={bannerImageUrl}
+                    onChange={(e) => setBannerImageUrl(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary text-sm bg-white outline-none transition-colors"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <FieldLabel>Texto del botón</FieldLabel>
+                  <input
+                    type="text"
+                    value={promoCta}
+                    onChange={(e) => setPromoCta(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary text-sm bg-white outline-none transition-colors"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setConfigError("");
+                  setMarketingSaving(true);
+                  updateConfig(
+                    {
+                      promo_badge: promoBadge.trim(),
+                      promo_title: promoTitle.trim(),
+                      promo_subtitle: promoSubtitle.trim(),
+                      banner_image_url: bannerImageUrl.trim(),
+                      promo_cta: promoCta.trim(),
+                    },
+                    token
+                  )
+                    .then((savedConfig) => {
+                      setMarketingConfig(
+                        savedConfig.promo_badge || promoBadge.trim() || configPromoBadge,
+                        savedConfig.promo_title || promoTitle.trim() || configPromoTitle,
+                        savedConfig.promo_subtitle || promoSubtitle.trim() || configPromoSubtitle,
+                        savedConfig.banner_image_url || bannerImageUrl.trim() || configBannerImageUrl,
+                        savedConfig.promo_cta || promoCta.trim() || configPromoCta
+                      );
+                      setMarketingSaved(true);
+                      setTimeout(() => setMarketingSaved(false), 2000);
+                    })
+                    .catch((error: unknown) => {
+                      console.error("Error al guardar la promoción:", error);
+                      setConfigError("No se pudo realizar la operación.");
+                    })
+                    .finally(() => setMarketingSaving(false));
+                }}
+                disabled={marketingSaving}
+                className="w-full bg-primary text-on-primary py-3 rounded-full font-label-md text-label-md shadow-lg active:scale-[0.98] transition-all"
+              >
+                {marketingSaving ? "Guardando..." : marketingSaved ? "¡Guardado!" : "Guardar ofertas y banner"}
               </button>
               {configError && <p role="alert" className="text-sm text-error">{configError}</p>}
             </section>

@@ -4,6 +4,11 @@ export interface AppConfig {
   wa_phone: string;
   instagram_url: string;
   tiktok_url: string;
+  promo_badge?: string;
+  promo_title?: string;
+  promo_subtitle?: string;
+  banner_image_url?: string;
+  promo_cta?: string;
 }
 
 export async function getConfig(): Promise<AppConfig> {
