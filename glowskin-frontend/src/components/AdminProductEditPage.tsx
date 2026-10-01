@@ -93,7 +93,8 @@ export default function AdminProductEditPage({
     getProductImages(token)
       .then((data) => { if (active) setImages(data); })
       .catch((error: unknown) => {
-        if (active) setImageError(error instanceof Error ? error.message : "No se pudo cargar la biblioteca");
+        console.error("Error al cargar la biblioteca de imágenes:", error);
+        if (active) setImageError("No se pudo realizar la operación.");
       });
     return () => { active = false; };
   }, [token]);
@@ -105,7 +106,8 @@ export default function AdminProductEditPage({
     setImageError("");
     setImageStatus("");
     if (file.size > 5 * 1024 * 1024) {
-      setImageError("La imagen no puede superar los 5 MB");
+      console.error("Error al subir imagen: archivo demasiado grande", { name: file.name, size: file.size });
+      setImageError("No se pudo realizar la operación.");
       return;
     }
 
@@ -120,7 +122,8 @@ export default function AdminProductEditPage({
       });
       setImageStatus("Imagen agregada a la galería. Guarda el producto para aplicar el cambio.");
     } catch (error) {
-      setImageError(error instanceof Error ? error.message : "No se pudo subir la imagen");
+      console.error("Error al subir la imagen:", error);
+      setImageError("No se pudo realizar la operación.");
     } finally {
       setImageBusy(false);
     }
@@ -140,7 +143,8 @@ export default function AdminProductEditPage({
       });
       setImageStatus("Imagen eliminada de la biblioteca.");
     } catch (error) {
-      setImageError(error instanceof Error ? error.message : "No se pudo borrar la imagen");
+      console.error("Error al borrar la imagen:", error);
+      setImageError("No se pudo realizar la operación.");
     } finally {
       setImageBusy(false);
     }

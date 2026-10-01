@@ -131,12 +131,8 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
         setActiveTab("inventory");
       })
       .catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : "No se pudo guardar el producto";
-        setProductSaveError(
-          /images/i.test(message) && /(column|schema cache|does not exist)/i.test(message)
-            ? "Falta aplicar la migración glowskin-backend/supabase/migration_product_images.sql en Supabase para guardar productos con galería."
-            : message
-        );
+        console.error("Error al guardar el producto:", error);
+        setProductSaveError("No se pudo realizar la operación.");
       })
       .finally(() => setIsSavingProduct(false));
   };
@@ -522,7 +518,10 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
                       setWaSaved(true);
                       setTimeout(() => setWaSaved(false), 2000);
                     })
-                    .catch((error: unknown) => setConfigError(error instanceof Error ? error.message : "No se pudo guardar el número"))
+                    .catch((error: unknown) => {
+                      console.error("Error al guardar el teléfono:", error);
+                      setConfigError("No se pudo realizar la operación.");
+                    })
                     .finally(() => setWaSaving(false));
                 }}
                   disabled={waSaving}
@@ -569,7 +568,10 @@ export default function AdminPage({ products, onUpdateProducts, onGoToStore }: A
                       setSocialSaved(true);
                       setTimeout(() => setSocialSaved(false), 2000);
                     })
-                    .catch((error: unknown) => setConfigError(error instanceof Error ? error.message : "No se pudieron guardar los enlaces"))
+                    .catch((error: unknown) => {
+                      console.error("Error al guardar los enlaces sociales:", error);
+                      setConfigError("No se pudo realizar la operación.");
+                    })
                     .finally(() => setSocialSaving(false));
                 }}
                 disabled={socialSaving}

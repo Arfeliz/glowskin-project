@@ -51,7 +51,8 @@ function AppContent() {
         setLoadError(null);
       })
       .catch((err: unknown) => {
-        setLoadError(err instanceof Error ? err.message : "Error al cargar productos");
+        console.error("Error al cargar productos:", err);
+        setLoadError("No se pudo realizar la operación.");
       })
       .finally(() => {
         setLoadingProducts(false);
