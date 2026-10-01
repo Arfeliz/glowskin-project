@@ -7,10 +7,22 @@ interface ProductCardProps {
   image: string;
   alt: string;
   category?: string;
+  isFavorite?: boolean;
   onSelect?: () => void;
+  onToggleFavorite?: (productId: number) => void;
 }
 
-export default function ProductCard({ id, name, price, image, alt, category, onSelect }: ProductCardProps) {
+export default function ProductCard({
+  id,
+  name,
+  price,
+  image,
+  alt,
+  category,
+  isFavorite = false,
+  onSelect,
+  onToggleFavorite,
+}: ProductCardProps) {
   const { addItem } = useCart();
 
   return (
@@ -32,6 +44,23 @@ export default function ProductCard({ id, name, price, image, alt, category, onS
             {category}
           </span>
         )}
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite?.(id);
+          }}
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-surface/85 backdrop-blur-md text-on-surface shadow-sm transition-all hover:scale-105"
+          aria-label={isFavorite ? "Quitar de la wishlist" : "Guardar en la wishlist"}
+        >
+          <span
+            className="material-symbols-outlined text-[20px]"
+            style={isFavorite ? { fontVariationSettings: "'FILL' 1" } : undefined}
+          >
+            favorite
+          </span>
+        </button>
 
         {/* Botón agregar — se revela con elegancia en hover, siempre visible en mobile */}
         <button

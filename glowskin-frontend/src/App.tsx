@@ -43,6 +43,31 @@ function AppContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<"featured" | "price-asc" | "price-desc" | "name">("featured");
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [wishlist, setWishlist] = useState<number[]>(() => {
+    try {
+      const stored = window.localStorage.getItem("glowskin-wishlist");
+      return stored ? JSON.parse(stored) as number[] : [];
+    } catch {
+      return [];
+    }
+  });
+  const [wishlistUser, setWishlistUser] = useState<string>(() => window.localStorage.getItem("glowskin-wishlist-user") ?? "");
+  const [isWishlistAuthOpen, setIsWishlistAuthOpen] = useState(false);
+  const [wishlistLogin, setWishlistLogin] = useState("");
+
+  useEffect(() => {
+    window.localStorage.setItem("glowskin-wishlist", JSON.stringify(wishlist));
+  }, [wishlist]);
+
+  useEffect(() => {
+    if (wishlistUser) {
+      window.localStorage.setItem("glowskin-wishlist-user", wishlistUser);
+    } else {
+      window.localStorage.removeItem("glowskin-wishlist-user");
+    }
+  }, [wishlistUser]);
 
   const reloadProducts = () => {
     getProducts()
@@ -160,19 +185,72 @@ function AppContent() {
     }
   };
 
-  // Search takes priority over category filter
+  const toggleWishlist = (productId: number) => {
+    if (!wishlistUser) {
+      setIsWishlistAuthOpen(true);
+      return;
+    }
+
+    setWishlist((current) =>
+      current.includes(productId)
+        ? current.filter((id) => id !== productId)
+        : [...current, productId]
+    );
+  };
+
+  const handleWishlistLogin = () => {
+    const user = wishlistLogin.trim();
+    if (!user) return;
+    setWishlistUser(user);
+    setWishlistLogin("");
+    setIsWishlistAuthOpen(false);
+  };
+
+  const handleWishlistLogout = () => {
+    setWishlistUser("");
+    setWishlistLogin("");
+    setIsWishlistAuthOpen(false);
+  };
+
+  // Search takes priority over category filter, and includes a set of advanced filters.
   const filtered = (() => {
     const q = searchQuery.trim().toLowerCase();
-    if (q) {
-      return products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          String(p.id).includes(q)
-      );
-    }
-    return activeCategory === "Todos"
+    let nextProducts = activeCategory === "Todos"
       ? products
       : products.filter((p) => p.category === activeCategory);
+
+    if (q) {
+      nextProducts = nextProducts.filter((p) => {
+        const haystack = [
+          p.name,
+          p.category ?? "",
+          p.description ?? "",
+          p.alt ?? "",
+          String(p.id),
+        ].join(" ").toLowerCase();
+        return haystack.includes(q);
+      });
+    }
+
+    if (maxPrice !== null) {
+      nextProducts = nextProducts.filter((p) => p.price <= maxPrice);
+    }
+
+    switch (sortBy) {
+      case "price-asc":
+        nextProducts = [...nextProducts].sort((a, b) => a.price - b.price);
+        break;
+      case "price-desc":
+        nextProducts = [...nextProducts].sort((a, b) => b.price - a.price);
+        break;
+      case "name":
+        nextProducts = [...nextProducts].sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      default:
+        break;
+    }
+
+    return nextProducts;
   })();
 
   return (
@@ -386,7 +464,17 @@ function AppContent() {
       ) : activePage === "categories" ? (
         <CategoriesPage onCategorySelect={handleCategorySelect} />
       ) : activePage === "wishlist" ? (
-        <WishlistPage />
+        <WishlistPage
+          products={products}
+          wishlist={wishlist}
+          isAuthenticated={Boolean(wishlistUser)}
+          onRemove={(productId) => setWishlist((current) => current.filter((id) => id !== productId))}
+          onLogin={() => {
+            setWishlistLogin(wishlistUser || "");
+            setIsWishlistAuthOpen(true);
+          }}
+          onLogout={handleWishlistLogout}
+        />
       ) : (
         <main className="pt-14 sm:pt-16 pb-20 md:pb-12">
           <HeroBanner />
@@ -424,7 +512,14 @@ function AppContent() {
 
           {/* Filtros de categoría — se ocultan si hay búsqueda activa */}
           {!searchQuery.trim() && (
-            <Filters active={activeCategory} onChange={setActiveCategory} />
+            <Filters
+              active={activeCategory}
+              sortBy={sortBy}
+              maxPrice={maxPrice}
+              onChange={setActiveCategory}
+              onSortChange={setSortBy}
+              onMaxPriceChange={setMaxPrice}
+            />
           )}
 
           {/* Encabezado de sección elegante */}
@@ -466,6 +561,8 @@ function AppContent() {
                 <ProductCard
                   key={product.id}
                   {...product}
+                  isFavorite={wishlist.includes(product.id)}
+                  onToggleFavorite={toggleWishlist}
                   onSelect={() => handleSelectProduct(product)}
                 />
               ))}
@@ -493,6 +590,54 @@ function AppContent() {
             )}
           </section>
         </main>
+      )}
+
+      {isWishlistAuthOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-surface-container-lowest p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-headline-sm text-headline-sm text-on-surface">Accede a tu wishlist</h3>
+              <button
+                type="button"
+                onClick={() => setIsWishlistAuthOpen(false)}
+                className="material-symbols-outlined text-on-surface-variant"
+                aria-label="Cerrar"
+              >
+                close
+              </button>
+            </div>
+            <p className="mb-4 text-sm text-on-surface-variant">
+              Inicia sesión para guardar tus favoritos y mantener la lista entre visitas.
+            </p>
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary mb-2">
+              Nombre o email
+            </label>
+            <input
+              type="text"
+              value={wishlistLogin}
+              onChange={(e) => setWishlistLogin(e.target.value)}
+              placeholder="ej. maria@glowskin.com"
+              className="w-full rounded-lg border border-outline-variant bg-white px-4 py-3 text-sm text-on-surface outline-none focus:border-primary"
+            />
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setIsWishlistAuthOpen(false)}
+                className="flex-1 rounded-full border border-outline-variant px-4 py-2.5 text-sm font-semibold text-on-surface-variant"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleWishlistLogin}
+                disabled={!wishlistLogin.trim()}
+                className="flex-1 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-40"
+              >
+                Entrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {activePage !== "product" && activePage !== "admin" && <WhatsAppButton />}
