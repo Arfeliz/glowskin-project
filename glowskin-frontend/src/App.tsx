@@ -44,7 +44,6 @@ function AppContent() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"featured" | "price-asc" | "price-desc" | "name">("featured");
-  const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [wishlist, setWishlist] = useState<number[]>(() => {
     try {
       const stored = window.localStorage.getItem("glowskin-wishlist");
@@ -230,10 +229,6 @@ function AppContent() {
         ].join(" ").toLowerCase();
         return haystack.includes(q);
       });
-    }
-
-    if (maxPrice !== null) {
-      nextProducts = nextProducts.filter((p) => p.price <= maxPrice);
     }
 
     switch (sortBy) {
@@ -515,10 +510,8 @@ function AppContent() {
             <Filters
               active={activeCategory}
               sortBy={sortBy}
-              maxPrice={maxPrice}
               onChange={setActiveCategory}
               onSortChange={setSortBy}
-              onMaxPriceChange={setMaxPrice}
             />
           )}
 

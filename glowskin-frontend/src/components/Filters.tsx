@@ -10,19 +10,15 @@ const categories = [
 interface FiltersProps {
   active: string;
   sortBy: "featured" | "price-asc" | "price-desc" | "name";
-  maxPrice: number | null;
   onChange: (category: string) => void;
   onSortChange: (value: "featured" | "price-asc" | "price-desc" | "name") => void;
-  onMaxPriceChange: (value: number | null) => void;
 }
 
 export default function Filters({
   active,
   sortBy,
-  maxPrice,
   onChange,
   onSortChange,
-  onMaxPriceChange,
 }: FiltersProps) {
   return (
     <section className="mb-stack-sm md:mb-stack-md lg:mb-stack-lg">
@@ -43,7 +39,7 @@ export default function Filters({
           ))}
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 max-w-md">
           <label className="flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-3 py-2 text-sm text-on-surface-variant">
             <span className="material-symbols-outlined text-[18px] text-primary">sort</span>
             <select
@@ -55,24 +51,6 @@ export default function Filters({
               <option value="price-asc">Precio: menor a mayor</option>
               <option value="price-desc">Precio: mayor a menor</option>
               <option value="name">Nombre A–Z</option>
-            </select>
-          </label>
-
-          <label className="flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-3 py-2 text-sm text-on-surface-variant">
-            <span className="material-symbols-outlined text-[18px] text-primary">tune</span>
-            <select
-              value={maxPrice ?? "all"}
-              onChange={(event) => {
-                const value = event.target.value;
-                onMaxPriceChange(value === "all" ? null : Number(value));
-              }}
-              className="w-full bg-transparent outline-none text-on-surface"
-            >
-              <option value="all">Todos los precios</option>
-              <option value="30">Hasta $30</option>
-              <option value="50">Hasta $50</option>
-              <option value="80">Hasta $80</option>
-              <option value="120">Hasta $120</option>
             </select>
           </label>
         </div>
