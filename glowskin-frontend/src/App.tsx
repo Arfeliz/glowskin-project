@@ -15,9 +15,14 @@ import AdminPage from "./components/AdminPage";
 import type { Product } from "./services/products";
 import { getProducts } from "./services/products";
 
-type Page = "home" | "categories" | "wishlist" | "product" | "admin";
+type Page = "home" | "categories" | "wishlist" | "product" | "admin" | "notFound";
 
 function getRouteFromUrl(): { page: Page; productId: number | null } {
+  const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
+  if (pathname !== "/") {
+    return { page: "notFound", productId: null };
+  }
+
   const params = new URLSearchParams(window.location.search);
   const productId = Number(params.get("producto"));
   if (Number.isInteger(productId) && productId > 0) {
@@ -52,21 +57,9 @@ function AppContent() {
       return [];
     }
   });
-  const [wishlistUser, setWishlistUser] = useState<string>(() => window.localStorage.getItem("glowskin-wishlist-user") ?? "");
-  const [isWishlistAuthOpen, setIsWishlistAuthOpen] = useState(false);
-  const [wishlistLogin, setWishlistLogin] = useState("");
-
   useEffect(() => {
     window.localStorage.setItem("glowskin-wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
-
-  useEffect(() => {
-    if (wishlistUser) {
-      window.localStorage.setItem("glowskin-wishlist-user", wishlistUser);
-    } else {
-      window.localStorage.removeItem("glowskin-wishlist-user");
-    }
-  }, [wishlistUser]);
 
   const reloadProducts = () => {
     getProducts()
@@ -101,10 +94,7 @@ function AppContent() {
       if (product) {
         setSelectedProduct(product);
       } else if (!loadingProducts && !loadError) {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("producto");
-        window.history.replaceState({}, "", url);
-        setActivePage("home");
+        setActivePage("notFound");
       }
     };
 
@@ -115,6 +105,7 @@ function AppContent() {
 
   const navigateTo = (page: Page, productId?: number) => {
     const url = new URL(window.location.href);
+    url.pathname = "/";
     url.searchParams.delete("producto");
     url.searchParams.delete("pagina");
 
@@ -185,30 +176,11 @@ function AppContent() {
   };
 
   const toggleWishlist = (productId: number) => {
-    if (!wishlistUser) {
-      setIsWishlistAuthOpen(true);
-      return;
-    }
-
     setWishlist((current) =>
       current.includes(productId)
         ? current.filter((id) => id !== productId)
         : [...current, productId]
     );
-  };
-
-  const handleWishlistLogin = () => {
-    const user = wishlistLogin.trim();
-    if (!user) return;
-    setWishlistUser(user);
-    setWishlistLogin("");
-    setIsWishlistAuthOpen(false);
-  };
-
-  const handleWishlistLogout = () => {
-    setWishlistUser("");
-    setWishlistLogin("");
-    setIsWishlistAuthOpen(false);
   };
 
   // Search takes priority over category filter, and includes a set of advanced filters.
@@ -247,6 +219,25 @@ function AppContent() {
 
     return nextProducts;
   })();
+
+  if (activePage === "notFound") {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center bg-surface px-6 text-center">
+        <p className="font-label-md text-label-md uppercase tracking-widest text-primary">Error 404</p>
+        <h1 className="mt-3 font-headline-md text-4xl text-on-surface">Página no encontrada</h1>
+        <p className="mt-3 max-w-md font-body-md text-on-surface-variant">
+          La dirección que buscas no existe o el producto ya no está disponible.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigateTo("home")}
+          className="mt-8 rounded-full bg-primary px-6 py-3 font-label-md text-label-md text-on-primary transition-opacity hover:opacity-90"
+        >
+          Volver al inicio
+        </button>
+      </main>
+    );
+  }
 
   return (
     <>
@@ -462,13 +453,7 @@ function AppContent() {
         <WishlistPage
           products={products}
           wishlist={wishlist}
-          isAuthenticated={Boolean(wishlistUser)}
           onRemove={(productId) => setWishlist((current) => current.filter((id) => id !== productId))}
-          onLogin={() => {
-            setWishlistLogin(wishlistUser || "");
-            setIsWishlistAuthOpen(true);
-          }}
-          onLogout={handleWishlistLogout}
         />
       ) : (
         <main className="pt-14 sm:pt-16 pb-20 md:pb-12">
@@ -583,54 +568,6 @@ function AppContent() {
             )}
           </section>
         </main>
-      )}
-
-      {isWishlistAuthOpen && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl bg-surface-container-lowest p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-headline-sm text-headline-sm text-on-surface">Accede a tu wishlist</h3>
-              <button
-                type="button"
-                onClick={() => setIsWishlistAuthOpen(false)}
-                className="material-symbols-outlined text-on-surface-variant"
-                aria-label="Cerrar"
-              >
-                close
-              </button>
-            </div>
-            <p className="mb-4 text-sm text-on-surface-variant">
-              Inicia sesión para guardar tus favoritos y mantener la lista entre visitas.
-            </p>
-            <label className="block text-xs font-bold uppercase tracking-wide text-primary mb-2">
-              Nombre o email
-            </label>
-            <input
-              type="text"
-              value={wishlistLogin}
-              onChange={(e) => setWishlistLogin(e.target.value)}
-              placeholder="ej. maria@glowskin.com"
-              className="w-full rounded-lg border border-outline-variant bg-white px-4 py-3 text-sm text-on-surface outline-none focus:border-primary"
-            />
-            <div className="mt-5 flex gap-3">
-              <button
-                type="button"
-                onClick={() => setIsWishlistAuthOpen(false)}
-                className="flex-1 rounded-full border border-outline-variant px-4 py-2.5 text-sm font-semibold text-on-surface-variant"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleWishlistLogin}
-                disabled={!wishlistLogin.trim()}
-                className="flex-1 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-40"
-              >
-                Entrar
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {activePage !== "product" && activePage !== "admin" && <WhatsAppButton />}
