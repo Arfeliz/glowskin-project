@@ -19,7 +19,8 @@ type Page = "home" | "categories" | "wishlist" | "product" | "admin" | "notFound
 
 function getRouteFromUrl(): { page: Page; productId: number | null } {
   const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
-  if (pathname !== "/") {
+  const basePath = import.meta.env.BASE_URL.replace(/\/+$/, "") || "/";
+  if (pathname !== basePath) {
     return { page: "notFound", productId: null };
   }
 
@@ -105,7 +106,7 @@ function AppContent() {
 
   const navigateTo = (page: Page, productId?: number) => {
     const url = new URL(window.location.href);
-    url.pathname = "/";
+    url.pathname = import.meta.env.BASE_URL;
     url.searchParams.delete("producto");
     url.searchParams.delete("pagina");
 
