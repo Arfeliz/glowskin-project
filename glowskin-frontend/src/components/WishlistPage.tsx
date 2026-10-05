@@ -7,12 +7,15 @@ interface WishlistPageProps {
   items: { productId: number; quantity: number }[];
   onQuantityChange: (productId: number, quantity: number) => void;
   onRemove: (productId: number) => void;
+  onClear: () => void;
 }
 
-export default function WishlistPage({ products, items: wishlistItems, onQuantityChange, onRemove }: WishlistPageProps) {
+export default function WishlistPage({ products, items: wishlistItems, onQuantityChange, onRemove, onClear }: WishlistPageProps) {
   const { waPhone } = useConfig();
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [whatsAppOpened, setWhatsAppOpened] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const items = wishlistItems.flatMap((entry) => {
     const product = products.find((item) => item.id === entry.productId);
@@ -38,6 +41,7 @@ export default function WishlistPage({ products, items: wishlistItems, onQuantit
       ? `https://wa.me/${waPhone}?text=${message}`
       : `https://wa.me/?text=${message}`;
     window.open(url, "_blank", "noopener,noreferrer");
+    setWhatsAppOpened(true);
   };
 
   return (
@@ -169,6 +173,50 @@ export default function WishlistPage({ products, items: wishlistItems, onQuantit
                 <span className="font-label-md uppercase tracking-widest font-bold">Enviar lista por WhatsApp</span>
               </button>
             </form>
+
+            {whatsAppOpened && (
+              <div role="status" className="mt-6 rounded-xl border border-green-700/20 bg-green-700/5 p-4">
+                <p className="text-sm text-on-surface">
+                  WhatsApp se abrió con tu pedido. Cuando termines de enviarlo, puedes vaciar la lista.
+                </p>
+                {!confirmClear ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmClear(true)}
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-error hover:opacity-80"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">delete_sweep</span>
+                    Vaciar lista de deseos
+                  </button>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    <p className="text-sm font-semibold text-on-surface">¿Vaciar todos los artículos de la lista?</p>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClear();
+                          setCustomerName("");
+                          setCustomerPhone("");
+                          setWhatsAppOpened(false);
+                          setConfirmClear(false);
+                        }}
+                        className="rounded-full bg-error px-4 py-2 text-sm font-semibold text-white"
+                      >
+                        Sí, vaciar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmClear(false)}
+                        className="rounded-full border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant"
+                      >
+                        Conservar lista
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </>
       )}

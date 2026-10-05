@@ -528,6 +528,7 @@ function AppContent() {
           items={wishlistItems}
           onQuantityChange={updateWishlistQuantity}
           onRemove={removeFromWishlist}
+          onClear={() => setWishlistItems([])}
         />
       ) : (
         <main className="pt-14 sm:pt-16 pb-20 md:pb-12">
