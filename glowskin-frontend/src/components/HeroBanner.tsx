@@ -39,12 +39,12 @@ export default function HeroBanner() {
           {promoSubtitle}
         </p>
 
-        <div className="animate-fade-up delay-300 flex items-center gap-3 sm:gap-4">
-          <button className="group w-fit px-7 py-3 sm:px-9 sm:py-3.5 bg-primary text-on-primary rounded-full font-label-md text-label-md active:scale-95 hover:shadow-lg transition-all transform flex items-center gap-2 elegant-shadow">
+        <div className="animate-fade-up delay-300 flex flex-wrap items-center gap-3 sm:gap-4">
+          <button className="group w-fit whitespace-nowrap px-5 py-3 sm:px-9 sm:py-3.5 bg-primary text-on-primary rounded-full font-label-md text-label-md active:scale-95 hover:shadow-lg transition-all transform flex items-center gap-2 elegant-shadow">
             {promoCta}
             <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
           </button>
-          <button className="w-fit px-7 py-3 sm:px-8 sm:py-3.5 bg-surface/70 backdrop-blur-md text-on-surface border border-outline-variant/50 rounded-full font-label-md text-label-md active:scale-95 hover:bg-surface transition-all transform">
+          <button className="w-fit whitespace-nowrap px-5 py-3 sm:px-8 sm:py-3.5 bg-surface/70 backdrop-blur-md text-on-surface border border-outline-variant/50 rounded-full font-label-md text-label-md active:scale-95 hover:bg-surface transition-all transform">
             Ver Categorías
           </button>
         </div>
