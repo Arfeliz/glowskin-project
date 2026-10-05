@@ -1,5 +1,3 @@
-import { useCart } from "../context/CartContext";
-
 interface ProductCardProps {
   id: number;
   name: string;
@@ -10,6 +8,7 @@ interface ProductCardProps {
   isFavorite?: boolean;
   onSelect?: () => void;
   onToggleFavorite?: (productId: number) => void;
+  onAddToWishlist?: (productId: number, quantity: number) => void;
 }
 
 export default function ProductCard({
@@ -22,9 +21,8 @@ export default function ProductCard({
   isFavorite = false,
   onSelect,
   onToggleFavorite,
+  onAddToWishlist,
 }: ProductCardProps) {
-  const { addItem } = useCart();
-
   return (
     <div className="flex flex-col group cursor-pointer hover-lift" onClick={onSelect}>
       <div className="relative aspect-[3/4] mb-3 bg-surface-container rounded-xl md:rounded-2xl overflow-hidden elegant-shadow group-hover:elegant-shadow-lg transition-shadow duration-500">
@@ -52,7 +50,7 @@ export default function ProductCard({
             onToggleFavorite?.(id);
           }}
           className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-surface/85 backdrop-blur-md text-on-surface shadow-sm transition-all hover:scale-105"
-          aria-label={isFavorite ? "Quitar de la wishlist" : "Guardar en la wishlist"}
+          aria-label={isFavorite ? "Quitar de favoritos" : "Guardar en favoritos"}
           aria-pressed={isFavorite}
         >
           <span
@@ -65,11 +63,11 @@ export default function ProductCard({
 
         {/* Botón agregar — se revela con elegancia en hover, siempre visible en mobile */}
         <button
-          onClick={(e) => { e.stopPropagation(); addItem({ id, name, price, image }); }}
+          onClick={(e) => { e.stopPropagation(); onAddToWishlist?.(id, 1); }}
           className="absolute bottom-3 right-3 w-10 h-10 sm:w-11 sm:h-11 bg-primary/95 backdrop-blur-sm rounded-full flex items-center justify-center text-on-primary hover:bg-primary active:scale-90 transition-all duration-300 shadow-lg sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0"
-          aria-label={`Agregar ${name} al carrito`}
+          aria-label={`Agregar ${name} a la lista de deseos`}
         >
-          <span className="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+          <span className="material-symbols-outlined text-[20px]">playlist_add</span>
         </button>
       </div>
 

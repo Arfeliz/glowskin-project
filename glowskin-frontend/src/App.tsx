@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { CartProvider } from "./context/CartContext";
 import { ConfigProvider } from "./context/ConfigContext";
-import { useCart } from "./context/CartContext";
 import { useConfig } from "./context/ConfigContext";
 import HeroBanner from "./components/HeroBanner";
 import Filters from "./components/Filters";
@@ -9,13 +8,22 @@ import ProductCard from "./components/ProductCard";
 import BottomNav from "./components/BottomNav";
 import WhatsAppButton from "./components/WhatsAppButton";
 import CategoriesPage from "./components/CategoriesPage";
+import FavoritesPage from "./components/FavoritesPage";
 import WishlistPage from "./components/WishlistPage";
 import ProductDetailPage from "./components/ProductDetailPage";
 import AdminPage from "./components/AdminPage";
 import type { Product } from "./services/products";
 import { getProducts } from "./services/products";
 
-type Page = "home" | "categories" | "wishlist" | "product" | "admin" | "notFound";
+type Page = "home" | "categories" | "favorites" | "wishlist" | "product" | "admin" | "notFound";
+interface WishlistEntry {
+  productId: number;
+  quantity: number;
+}
+
+const FAVORITES_STORAGE_KEY = "glowskin-favorites";
+const LEGACY_WISHLIST_STORAGE_KEY = "glowskin-wishlist";
+const ORDER_LIST_STORAGE_KEY = "glowskin-order-list";
 
 function getRouteFromUrl(): { page: Page; productId: number | null } {
   const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
@@ -31,14 +39,13 @@ function getRouteFromUrl(): { page: Page; productId: number | null } {
   }
 
   const page = params.get("pagina");
-  if (page === "categories" || page === "wishlist" || page === "admin") {
+  if (page === "categories" || page === "favorites" || page === "wishlist" || page === "admin") {
     return { page, productId: null };
   }
   return { page: "home", productId: null };
 }
 
 function AppContent() {
-  const { items } = useCart();
   const { instagramUrl, tiktokUrl } = useConfig();
   const [activePage, setActivePage] = useState<Page>(() => getRouteFromUrl().page);
   const [activeCategory, setActiveCategory] = useState("Todos");
@@ -50,17 +57,34 @@ function AppContent() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"featured" | "price-asc" | "price-desc" | "name">("featured");
-  const [wishlist, setWishlist] = useState<number[]>(() => {
+  const [favorites, setFavorites] = useState<number[]>(() => {
     try {
-      const stored = window.localStorage.getItem("glowskin-wishlist");
+      const stored = window.localStorage.getItem(FAVORITES_STORAGE_KEY)
+        ?? window.localStorage.getItem(LEGACY_WISHLIST_STORAGE_KEY);
       return stored ? JSON.parse(stored) as number[] : [];
     } catch {
       return [];
     }
   });
   useEffect(() => {
-    window.localStorage.setItem("glowskin-wishlist", JSON.stringify(wishlist));
-  }, [wishlist]);
+    window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+    window.localStorage.removeItem(LEGACY_WISHLIST_STORAGE_KEY);
+  }, [favorites]);
+  const [wishlistItems, setWishlistItems] = useState<WishlistEntry[]>(() => {
+    try {
+      const stored = window.localStorage.getItem(ORDER_LIST_STORAGE_KEY);
+      if (!stored) return [];
+      const parsed = JSON.parse(stored) as WishlistEntry[];
+      return Array.isArray(parsed)
+        ? parsed.filter((entry) => Number.isInteger(entry.productId) && entry.quantity > 0)
+        : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    window.localStorage.setItem(ORDER_LIST_STORAGE_KEY, JSON.stringify(wishlistItems));
+  }, [wishlistItems]);
 
   const reloadProducts = () => {
     getProducts()
@@ -140,8 +164,6 @@ function AppContent() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
-
   // Reload products from API after admin changes, then refresh selected product if open
   const handleUpdateProducts = () => {
     getProducts()
@@ -176,13 +198,37 @@ function AppContent() {
     }
   };
 
-  const toggleWishlist = (productId: number) => {
-    setWishlist((current) =>
+  const toggleFavorite = (productId: number) => {
+    setFavorites((current) =>
       current.includes(productId)
         ? current.filter((id) => id !== productId)
         : [...current, productId]
     );
   };
+
+  const addToWishlist = (productId: number, quantity: number) => {
+    setWishlistItems((current) => {
+      const existing = current.find((entry) => entry.productId === productId);
+      return existing
+        ? current.map((entry) => entry.productId === productId
+          ? { ...entry, quantity: entry.quantity + quantity }
+          : entry)
+        : [...current, { productId, quantity }];
+    });
+  };
+
+  const updateWishlistQuantity = (productId: number, quantity: number) => {
+    if (quantity < 1) return;
+    setWishlistItems((current) => current.map((entry) => entry.productId === productId
+      ? { ...entry, quantity }
+      : entry));
+  };
+
+  const removeFromWishlist = (productId: number) => {
+    setWishlistItems((current) => current.filter((entry) => entry.productId !== productId));
+  };
+
+  const wishlistCount = wishlistItems.reduce((sum, entry) => sum + entry.quantity, 0);
 
   // Search takes priority over category filter, and includes a set of advanced filters.
   const filtered = (() => {
@@ -253,10 +299,10 @@ function AppContent() {
           menu
         </button>
         <h1 className="font-headline-md text-headline-sm sm:text-headline-md text-primary tracking-[0.18em] select-none">
-          {activePage === "categories" ? "CATEGORÍAS" : activePage === "wishlist" ? "MI LISTA" : "GLOWSKIN"}
+          {activePage === "categories" ? "CATEGORÍAS" : activePage === "favorites" ? "FAVORITOS" : activePage === "wishlist" ? "LISTA DE DESEOS" : "GLOWSKIN"}
         </h1>
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* Nav links — solo desktop. El bolso ya cubre "Mi Lista" con badge */}
+          {/* Nav links — solo desktop. */}
           <nav className="hidden md:flex items-center gap-6 mr-4">
             {(["home", "categories"] as Page[]).map((page) => {
               const labels: Record<string, string> = { home: "Inicio", categories: "Categorías" };
@@ -288,18 +334,33 @@ function AppContent() {
               style={isSearchOpen ? { fontVariationSettings: "'FILL' 1" } : undefined}
             >search</span>
           </button>
-          {/* Bolso — única entrada a Mi Lista en desktop, con badge de cantidad */}
+          {/* Favoritos */}
+          <button
+            onClick={() => navigateTo("favorites")}
+            className="relative text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform"
+            aria-label="Favoritos"
+          >
+            <span className="material-symbols-outlined text-[24px] sm:text-[28px]"
+              style={activePage === "favorites" ? { fontVariationSettings: "'FILL' 1" } : undefined}
+            >favorite</span>
+            {favorites.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-primary text-on-primary text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
+                {favorites.length > 9 ? "9+" : favorites.length}
+              </span>
+            )}
+          </button>
+          {/* Lista de deseos */}
           <button
             onClick={() => navigateTo("wishlist")}
             className="relative text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform"
-            aria-label="Mi Lista"
+            aria-label="Lista de deseos"
           >
             <span className="material-symbols-outlined text-[24px] sm:text-[28px]"
               style={activePage === "wishlist" ? { fontVariationSettings: "'FILL' 1" } : undefined}
             >shopping_bag</span>
-            {cartCount > 0 && (
+            {wishlistCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-primary text-on-primary text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
-                {cartCount > 9 ? "9+" : cartCount}
+                {wishlistCount > 9 ? "9+" : wishlistCount}
               </span>
             )}
           </button>
@@ -336,7 +397,8 @@ function AppContent() {
               {([
                 ["home",       "home",     "Inicio"],
                 ["categories", "category", "Categorías"],
-                ["wishlist",   "favorite", "Mi Lista"],
+                ["favorites",  "favorite", "Favoritos"],
+                ["wishlist",   "shopping_bag", "Lista de deseos"],
               ] as [Page, string, string][]).map(([page, icon, label]) => (
                 <button
                   key={page}
@@ -434,8 +496,9 @@ function AppContent() {
             key={selectedProduct.id}
             product={selectedProduct}
             relatedProducts={products.filter((p) => p.id !== selectedProduct.id).slice(0, 5)}
-            isFavorite={wishlist.includes(selectedProduct.id)}
-            onToggleFavorite={toggleWishlist}
+            isFavorite={favorites.includes(selectedProduct.id)}
+            onToggleFavorite={toggleFavorite}
+            onAddToWishlist={addToWishlist}
             onBack={() => navigateTo("home")}
             onSelectProduct={handleSelectProduct}
           />
@@ -452,11 +515,19 @@ function AppContent() {
         />
       ) : activePage === "categories" ? (
         <CategoriesPage onCategorySelect={handleCategorySelect} />
+      ) : activePage === "favorites" ? (
+        <FavoritesPage
+          products={products}
+          favorites={favorites}
+          onRemove={toggleFavorite}
+          onSelectProduct={handleSelectProduct}
+        />
       ) : activePage === "wishlist" ? (
         <WishlistPage
           products={products}
-          wishlist={wishlist}
-          onRemove={(productId) => setWishlist((current) => current.filter((id) => id !== productId))}
+          items={wishlistItems}
+          onQuantityChange={updateWishlistQuantity}
+          onRemove={removeFromWishlist}
         />
       ) : (
         <main className="pt-14 sm:pt-16 pb-20 md:pb-12">
@@ -542,8 +613,9 @@ function AppContent() {
                 <ProductCard
                   key={product.id}
                   {...product}
-                  isFavorite={wishlist.includes(product.id)}
-                  onToggleFavorite={toggleWishlist}
+                  isFavorite={favorites.includes(product.id)}
+                  onToggleFavorite={toggleFavorite}
+                  onAddToWishlist={addToWishlist}
                   onSelect={() => handleSelectProduct(product)}
                 />
               ))}
@@ -597,8 +669,8 @@ function AppContent() {
               <div>
                 <p className="font-label-md text-label-md uppercase tracking-widest text-on-surface mb-4">Explorar</p>
                 <ul className="space-y-2">
-                  {([["home","Inicio"],["categories","Categorías"],["wishlist","Mi Lista"]] as [Page,string][]).map(([page, label]) => (
-                    <li key={page}>
+                      {([["home","Inicio"],["categories","Categorías"],["favorites","Favoritos"],["wishlist","Lista de deseos"]] as [Page,string][]).map(([page, label]) => (
+                      <li key={page}>
                       <button
                         onClick={() => navigateTo(page)}
                         className="font-body-md text-sm text-on-surface-variant hover:text-primary transition-colors"

@@ -4,28 +4,35 @@ import { useConfig } from "../context/ConfigContext";
 
 interface WishlistPageProps {
   products: Product[];
-  wishlist: number[];
+  items: { productId: number; quantity: number }[];
+  onQuantityChange: (productId: number, quantity: number) => void;
   onRemove: (productId: number) => void;
 }
 
-export default function WishlistPage({ products, wishlist, onRemove }: WishlistPageProps) {
+export default function WishlistPage({ products, items: wishlistItems, onQuantityChange, onRemove }: WishlistPageProps) {
   const { waPhone } = useConfig();
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
 
-  const items = products.filter((product) => wishlist.includes(product.id));
-  const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+  const items = wishlistItems.flatMap((entry) => {
+    const product = products.find((item) => item.id === entry.productId);
+    return product ? [{ ...product, quantity: entry.quantity }] : [];
+  });
+  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const handleSendToWhatsApp = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!customerName.trim() || !customerPhone.trim() || items.length === 0) return;
 
-    const lines = items.map((item) => `- ${item.name} — $${item.price.toFixed(2)}`);
+    const lines = items.map((item) =>
+      `- ${item.name} | Cantidad: ${item.quantity} | Precio unitario: $${item.price.toFixed(2)} | Subtotal: $${(item.price * item.quantity).toFixed(2)}`
+    );
     const message = encodeURIComponent(
       `Hola, me interesa hacer un pedido en GlowSkin.\n\n` +
       `Datos del cliente:\nNombre: ${customerName.trim()}\nTeléfono: ${customerPhone.trim()}\n\n` +
       `Productos:\n${lines.join("\n")}\n\n` +
-      `Total estimado: $${subtotal.toFixed(2)}`
+      `Total estimado: $${total.toFixed(2)}`
     );
     const url = waPhone
       ? `https://wa.me/${waPhone}?text=${message}`
@@ -38,23 +45,23 @@ export default function WishlistPage({ products, wishlist, onRemove }: WishlistP
       <header className="mb-stack-lg">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="font-headline-md text-headline-md text-on-surface mb-2">Mi Lista</h2>
+            <h2 className="font-headline-md text-headline-md text-on-surface mb-2">Lista de deseos</h2>
             <p className="font-body-md text-on-surface-variant">
-              Guarda tus favoritos para volver a ellos más tarde.
+              Revisa los artículos y las cantidades antes de enviar tu pedido.
             </p>
           </div>
         </div>
         <p className="mt-2 font-body-md text-sm text-on-surface-variant">
-          Tus favoritos se guardan en este dispositivo.
+          Tu lista se guarda en este dispositivo.
         </p>
       </header>
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
           <span className="material-symbols-outlined text-6xl text-outline">favorite_border</span>
-          <p className="font-headline-sm text-headline-sm text-on-surface">Tu lista está vacía</p>
+          <p className="font-headline-sm text-headline-sm text-on-surface">Tu lista de deseos está vacía</p>
           <p className="font-body-md text-on-surface-variant max-w-xs">
-            Agrega productos desde la tienda para verlos aquí.
+            Explora los productos y agrégalos a tu lista con la cantidad que deseas.
           </p>
         </div>
       ) : (
@@ -82,9 +89,31 @@ export default function WishlistPage({ products, wishlist, onRemove }: WishlistP
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="font-body-md font-bold text-primary">${item.price.toFixed(2)}</span>
-                    <span className="text-xs rounded-full bg-primary/10 px-2 py-1 text-primary">Guardado</span>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-on-surface-variant">${item.price.toFixed(2)} c/u</p>
+                      <p className="font-body-md font-bold text-primary">Subtotal: ${(item.price * item.quantity).toFixed(2)}</p>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-full border border-outline-variant px-2 py-1">
+                      <button
+                        type="button"
+                        onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                        className="flex h-8 w-8 items-center justify-center text-primary disabled:opacity-40"
+                        aria-label={`Reducir cantidad de ${item.name}`}
+                      >
+                        <span className="material-symbols-outlined">remove</span>
+                      </button>
+                      <span className="min-w-6 text-center font-label-md">{item.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => onQuantityChange(item.id, item.quantity + 1)}
+                        className="flex h-8 w-8 items-center justify-center text-primary"
+                        aria-label={`Aumentar cantidad de ${item.name}`}
+                      >
+                        <span className="material-symbols-outlined">add</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -92,15 +121,19 @@ export default function WishlistPage({ products, wishlist, onRemove }: WishlistP
           </div>
 
           <div className="bg-surface-container p-6 rounded-2xl mb-12">
-            <h3 className="font-label-md text-on-surface mb-4 uppercase tracking-widest">Resumen de favoritos</h3>
+            <h3 className="font-label-md text-on-surface mb-4 uppercase tracking-widest">Resumen del pedido</h3>
             <div className="space-y-3">
               <div className="flex justify-between font-body-md text-on-surface-variant">
-                <span>Productos</span>
+                <span>Artículos distintos</span>
                 <span>{items.length}</span>
               </div>
+              <div className="flex justify-between font-body-md text-on-surface-variant">
+                <span>Unidades</span>
+                <span>{totalQuantity}</span>
+              </div>
               <div className="border-t border-outline-variant pt-3 mt-3 flex justify-between items-center">
-                <span className="font-headline-sm text-headline-sm text-on-surface">Total estimado</span>
-                <span className="font-headline-sm text-headline-sm text-primary font-bold">${subtotal.toFixed(2)}</span>
+                <span className="font-headline-sm text-headline-sm text-on-surface">Total del pedido</span>
+                <span className="font-headline-sm text-headline-sm text-primary font-bold">${total.toFixed(2)}</span>
               </div>
             </div>
 

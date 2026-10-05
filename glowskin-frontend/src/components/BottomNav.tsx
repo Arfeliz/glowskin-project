@@ -1,9 +1,10 @@
-type Page = "home" | "categories" | "wishlist" | "admin";
+type Page = "home" | "categories" | "favorites" | "wishlist" | "admin";
 
 const items: { icon: string; label: string; page: Page }[] = [
-  { icon: "home", label: "Home", page: "home" },
+  { icon: "home", label: "Inicio", page: "home" },
   { icon: "category", label: "Categorías", page: "categories" },
-  { icon: "favorite", label: "Mi Lista", page: "wishlist" },
+  { icon: "favorite", label: "Favoritos", page: "favorites" },
+  { icon: "shopping_bag", label: "Deseos", page: "wishlist" },
   // Admin tab is intentionally hidden — access via /admin
 ];
 
@@ -22,7 +23,8 @@ export default function BottomNav({ activePage = "home", onNavigate }: BottomNav
             <button
               key={item.label}
               onClick={() => onNavigate?.(item.page)}
-              className={`relative flex flex-col items-center justify-center rounded-full px-4 sm:px-5 py-1.5 active:scale-90 transition-all duration-300 ${
+              aria-label={item.page === "wishlist" ? "Lista de deseos" : item.label}
+              className={`relative flex flex-col items-center justify-center whitespace-nowrap rounded-full px-2 sm:px-4 py-1.5 active:scale-90 transition-all duration-300 ${
                 isActive
                   ? "bg-primary text-on-primary shadow-md"
                   : "text-on-surface-variant hover:text-primary"

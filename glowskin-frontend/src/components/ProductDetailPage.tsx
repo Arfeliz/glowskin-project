@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import { useCart } from "../context/CartContext";
 import type { Product } from "../services/products";
 import { DEFAULT_PRODUCT_BENEFIT_POINTS, DEFAULT_PRODUCT_DESCRIPTION } from "./productContent";
 
@@ -46,6 +45,7 @@ interface ProductDetailPageProps {
   relatedProducts: Product[];
   isFavorite: boolean;
   onToggleFavorite: (productId: number) => void;
+  onAddToWishlist: (productId: number, quantity: number) => void;
   onBack: () => void;
   onSelectProduct: (product: Product) => void;
 }
@@ -56,11 +56,12 @@ export default function ProductDetailPage({
   relatedProducts,
   isFavorite,
   onToggleFavorite,
+  onAddToWishlist,
   onBack,
   onSelectProduct,
 }: ProductDetailPageProps) {
-  const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
+  const [addedToWishlist, setAddedToWishlist] = useState(false);
   const [shareMessage, setShareMessage] = useState("");
   const [activeImage, setActiveImage] = useState(0);
   const touchStartX = useRef<number | null>(null);
@@ -73,11 +74,9 @@ export default function ProductDetailPage({
     setActiveImage((index) => (index + 1) % galleryImages.length);
   };
 
-  const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addItem({ id: product.id, name: product.name, price: product.price, image: product.image });
-    }
-    setQuantity(1);
+  const handleAddToWishlist = () => {
+    onAddToWishlist(product.id, quantity);
+    setAddedToWishlist(true);
   };
 
   const handleShare = async () => {
@@ -320,32 +319,33 @@ export default function ProductDetailPage({
 
         <button
           type="button"
-          onClick={handleAddToCart}
-          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-outline-variant text-primary transition-transform active:scale-90"
-          aria-label={`Agregar ${quantity} ${quantity === 1 ? "artículo" : "artículos"} al carrito`}
-          title="Agregar al carrito"
+          onClick={() => onToggleFavorite(product.id)}
+          aria-pressed={isFavorite}
+          className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border transition-all active:scale-90 ${
+            isFavorite
+              ? "border-primary bg-secondary-container text-primary"
+              : "border-outline-variant text-on-surface-variant"
+          }`}
+          aria-label={isFavorite ? "Quitar de favoritos" : "Agregar a favoritos"}
         >
-          <span className="material-symbols-outlined">add_shopping_cart</span>
+          <span
+            className={`material-symbols-outlined transition-transform duration-300 ${isFavorite ? "scale-125" : "scale-100"}`}
+            style={isFavorite ? { fontVariationSettings: "'FILL' 1" } : undefined}
+          >
+            favorite
+          </span>
         </button>
 
         <button
           type="button"
-          onClick={() => onToggleFavorite(product.id)}
-          aria-pressed={isFavorite}
-          className={`flex-1 h-12 rounded-full font-label-md text-label-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
-            isFavorite
-              ? "bg-secondary-container text-primary"
-              : "bg-primary text-on-primary"
-          }`}
-          style={!isFavorite ? { boxShadow: "0px 10px 30px rgba(122, 86, 66, 0.25)" } : undefined}
+          onClick={handleAddToWishlist}
+          aria-label="Agregar a Lista de deseos"
+          className="flex-1 h-12 rounded-full bg-primary text-on-primary font-label-md text-label-sm sm:text-label-md transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          style={{ boxShadow: "0px 10px 30px rgba(122, 86, 66, 0.25)" }}
         >
-          <span
-            className={`material-symbols-outlined transition-transform duration-300 ${isFavorite ? "scale-125" : "scale-100"}`}
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            favorite
-          </span>
-          <span>{isFavorite ? "En mi lista" : "Añadir a mi lista"}</span>
+          <span className="material-symbols-outlined">{addedToWishlist ? "check" : "playlist_add"}</span>
+          <span className="sm:hidden">{addedToWishlist ? "Agregado" : "Agregar"}</span>
+          <span className="hidden sm:inline">{addedToWishlist ? "Agregado a Lista de deseos" : "Agregar a Lista de deseos"}</span>
         </button>
       </nav>
     </div>
