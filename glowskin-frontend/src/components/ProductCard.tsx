@@ -53,9 +53,10 @@ export default function ProductCard({
           }}
           className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-surface/85 backdrop-blur-md text-on-surface shadow-sm transition-all hover:scale-105"
           aria-label={isFavorite ? "Quitar de la wishlist" : "Guardar en la wishlist"}
+          aria-pressed={isFavorite}
         >
           <span
-            className="material-symbols-outlined text-[20px]"
+            className={`material-symbols-outlined text-[20px] transition-transform duration-300 ${isFavorite ? "scale-125" : "scale-100"}`}
             style={isFavorite ? { fontVariationSettings: "'FILL' 1" } : undefined}
           >
             favorite

@@ -434,6 +434,8 @@ function AppContent() {
             key={selectedProduct.id}
             product={selectedProduct}
             relatedProducts={products.filter((p) => p.id !== selectedProduct.id).slice(0, 5)}
+            isFavorite={wishlist.includes(selectedProduct.id)}
+            onToggleFavorite={toggleWishlist}
             onBack={() => navigateTo("home")}
             onSelectProduct={handleSelectProduct}
           />

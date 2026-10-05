@@ -44,6 +44,8 @@ function AccordionItem({
 interface ProductDetailPageProps {
   product: Product;
   relatedProducts: Product[];
+  isFavorite: boolean;
+  onToggleFavorite: (productId: number) => void;
   onBack: () => void;
   onSelectProduct: (product: Product) => void;
 }
@@ -52,6 +54,8 @@ interface ProductDetailPageProps {
 export default function ProductDetailPage({
   product,
   relatedProducts,
+  isFavorite,
+  onToggleFavorite,
   onBack,
   onSelectProduct,
 }: ProductDetailPageProps) {
@@ -314,19 +318,34 @@ export default function ProductDetailPage({
           </button>
         </div>
 
-        {/* Add to list */}
         <button
+          type="button"
           onClick={handleAddToCart}
-          className="flex-1 bg-primary text-on-primary font-label-md text-label-md h-12 rounded-full active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-          style={{ boxShadow: "0px 10px 30px rgba(122, 86, 66, 0.25)" }}
+          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-outline-variant text-primary transition-transform active:scale-90"
+          aria-label={`Agregar ${quantity} ${quantity === 1 ? "artículo" : "artículos"} al carrito`}
+          title="Agregar al carrito"
+        >
+          <span className="material-symbols-outlined">add_shopping_cart</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onToggleFavorite(product.id)}
+          aria-pressed={isFavorite}
+          className={`flex-1 h-12 rounded-full font-label-md text-label-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+            isFavorite
+              ? "bg-secondary-container text-primary"
+              : "bg-primary text-on-primary"
+          }`}
+          style={!isFavorite ? { boxShadow: "0px 10px 30px rgba(122, 86, 66, 0.25)" } : undefined}
         >
           <span
-            className="material-symbols-outlined"
+            className={`material-symbols-outlined transition-transform duration-300 ${isFavorite ? "scale-125" : "scale-100"}`}
             style={{ fontVariationSettings: "'FILL' 1" }}
           >
             favorite
           </span>
-          <span>Añadir a mi lista</span>
+          <span>{isFavorite ? "En mi lista" : "Añadir a mi lista"}</span>
         </button>
       </nav>
     </div>
